@@ -1,0 +1,420 @@
+---
+title: "Bee Mixtox Supplemental Information"
+output: word_document
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  comment = "#>"
+)
+```
+
+```{r setup,include=FALSE}
+library(beemixtox)
+library(tidyverse)
+library(knitr)
+```
+
+# Data Pre-processing
+
+## Query from EPA-Ecotox
+
+- **Chemicals**
+- **Effect Measurements **
+  - Mortality Group
+	    - Mortality
+- **Endpoints **
+  - Concentration Based Endpoints
+	  - LD50
+- **Species **
+  - Name(s) / Number(s)
+	  - honey bee
+  - Kingdom: Animals
+  - Name Search Type: Common Name
+- **Test Conditions **
+  - Test Locations
+	  - Lab
+- **Publication Options **
+
+Note in this level reduced to 576 CAS
+
+```{r eval=FALSE}
+#Define and set paths
+Dir_Data = "~/Projects/beemixtox/data-raw/"
+Data.SSD = read.csv(paste0(Dir_Data,"data/Copy of etc4373-sup-0002-supmat.csv"))
+## usethis::use_data(Data.SSD) ## The common-name of the EPA Ecotox DB.
+#Load data (USEPA internal not for publication)
+
+#Load data
+
+Data = read.csv(paste0(Dir_Data,"data/TerrestrialReport.csv"))
+## usethis::use_data("Data")
+length(unique(Data$CAS.Number))
+#578 CAS
+```
+
+- Selection
+    - Life stage: Adult
+    - Duration days <=2, restrict to 24 h and 48 h studies.
+    - Remove censored LDx. 
+    - Use CASes with no less than 3 observations. 29 Chemicals
+    - Retain only data with units in "AI mg/org","AI ng/org","AI ug/org","mg/bee","mg/org","ng/org","ug/bee","ug/org"
+    - Exposure type: "Oral via capsule","Spray"
+    - 
+- Curation
+    - Units transformed to microgram based. (mg, ng ==> ug)
+    
+
+
+## CV calculation
+
+- Restrict the database for chemicals with repeated entries (i.e., more than 3 or 5 LD50 for the same chemical) ==> 16 chemicals
+- 
+
+
+```{r eval=FALSE}
+#Subset dataset for relevant parameters
+Data.1 = Data
+Data.1 = Data.1[Data.1$Organism.Lifestage%in%c("Adult"),]
+
+#Subset for relevant exposure times
+Data.1$Observed.Duration..Days.[Data.1$Observed.Duration..Days.=="NR"] = NA
+Data.1$Observed.Duration..Days. = as.numeric(as.character(Data.1$Observed.Duration..Days.))
+
+# Restrict to 24 h & 48 h end-points
+Data.1 = Data.1[Data.1$Observed.Duration..Days.>=1 & Data.1$Observed.Duration..Days.<=2,]
+
+#Restrict to definitive LDx
+Data.1 = Data.1[Data.1$Observed.Response.Mean.Op%in%c(""),]
+
+Data.1 = droplevels(Data.1)
+
+length(unique(Data.1$CAS.Number))
+
+# How many end-points per CAS number?
+NPerCAS = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, length)
+NPerCAS = NPerCAS[order(NPerCAS$Observed.Response.Mean, decreasing = T),]
+
+# Restrict to more than 5 observations
+NPerCAS = NPerCAS[NPerCAS$Observed.Response.Mean>=3,]
+#29 compunts
+
+# Restrict Data.1 for these 29 compounds
+Data.1 = Data.1[Data.1$CAS.Number%in%c(NPerCAS$CAS.Number),]; Data.1 = droplevels(Data.1)
+
+# Homogenize units
+table(Data.1$Observed.Response.Units)
+
+## UNITS
+Data.1$Observed.Response.Mean = as.numeric(as.character(Data.1$Observed.Response.Mean))
+# Retain only useful units
+Data.1 = Data.1[Data.1$Observed.Response.Units%in%c("AI mg/org","AI ng/org","AI ug/org","mg/bee","mg/org","ng/org","ug/bee","ug/org"),]; Data.1 = droplevels(Data.1)
+
+#Transform mg to microgram
+Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI mg/org","mg/bee","mg/org")] = Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI mg/org","mg/bee","mg/org")]*1000 #to ug/bee
+Data.1$Observed.Response.Units[Data.1$Observed.Response.Units%in%c("AI mg/org","mg/bee","mg/org")] = "ug/bee"
+
+#ng to microgram
+Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI ng/org","ng/org")] = Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI ng/org","ng/org")]/1000 #to ug/bee
+Data.1$Observed.Response.Units[Data.1$Observed.Response.Units%in%c("AI ng/org","ng/org")] = "ug/bee"
+
+# Homogenize ng/bee
+Data.1$Observed.Response.Units[Data.1$Observed.Response.Units%in%c("AI ug/org","ug/bee","ug/org")] = "ug/bee"
+
+table(Data.1$Observed.Response.Units)
+Data.1 = droplevels(Data.1)
+
+# Exposure media
+table(Data.1$Exposure.Type)
+Data.1 = Data.1[!Data.1$Exposure.Type%in%c("Oral via capsule","Spray"),]; Data.1 = droplevels(Data.1)
+```
+
+
+```{r eval=FALSE}
+# Approximate variability
+Bee.var.N = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, length)
+Bee.var.Ave = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, mean)
+Bee.var.sd = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, sd)
+
+# Merge
+Bee.var = merge(Bee.var.N,Bee.var.Ave, by="CAS.Number")
+Bee.var = merge(Bee.var,Bee.var.sd, by="CAS.Number")
+names(Bee.var) [c(2:4)] = c("N", "Mean", "sd")
+
+# Restrict to at least 5 cases per CAS
+Bee.var = Bee.var[Bee.var$N>3,] # 16 chemicals
+
+Bee.var$CV.Perc = 100*(Bee.var$Mean/Bee.var$sd)
+Bee.var = merge(Bee.var, Data.SSD[,c(1,3)], by.x = "CAS.Number", by.y = "CAS.", all.x = T)
+Bee.var = Bee.var[order(Bee.var$N, decreasing = T),]
+
+# Summary of CV%
+summary(Bee.var)
+
+# Check for independency of N and Mean
+plot(Bee.var$N,Bee.var$CV.Perc)
+plot(log10(Bee.var$N),Bee.var$CV.Perc)
+plot(log10(Bee.var$Mean), Bee.var$CV.Perc)
+
+# Which chemicals do we have represented?
+
+#restrict Data.1 to the selected CAS.N
+Data.2 = Data.1
+Data.2 = Data.2[Data.2$CAS.Number%in%Bee.var$CAS.Number,]; Data.2 = droplevels(Data.2)
+Data.2$CAS.Number = as.character(Data.2$CAS.Number)
+
+# Check consistency again
+table(Data.2$Chemical.Grade)
+# Chemical grade is not reported in most cases
+table(Data.2$Organism.Lifestage)
+table(Data.2$Exposure.Type)
+table(Data.2$Number.of.Doses)
+table(Data.2$Observed.Duration..Days.)
+```
+
+
+```{r eval=FALSE}
+aov.1 = aov(Observed.Response.Mean ~ CAS.Number + Conc.1.Type..Author. + Exposure.Type + Observed.Duration..Days., data = Data.2)
+summary(aov.1)
+
+
+# Save reference list only
+Data.2.Ref = unique(Data.2[,c(70,71,72,73,74)])
+##usethis::use_data(Data.2)
+write.csv(Data.2.Ref, file = "data/Data.2.Ref_ECOTOX_BeeLD50_Curated.csv", row.names = F)
+```
+
+ 
+
+```{r eval=FALSE,include=FALSE}
+## Analysis of Data.B (USEPA internal, not for external use)
+Data.B.1 = Data.B[Data.B$GUIDELINE=="141-1",] #retrict to relevant guideline - relevant Guideline: 141-1
+Data.B.1 = droplevels(Data.B.1)
+table(Data.B.1$TAXA)
+table(Data.B.1$TGL)
+Data.B.1$TOXICITY = as.numeric(as.character(Data.B.1$TOXICITY))
+Data.B.1 = Data.B.1[complete.cases(Data.B.1$TOXICITY),]
+
+#Only definitive values
+Data.B.1 = Data.B.1[Data.B.1$TGL=="",]
+B.Bee.var.N = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, length)
+B.Bee.var.Ave = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, mean)
+B.Bee.var.sd = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, sd)
+
+# Merge
+B.Bee.var = merge(B.Bee.var.N,B.Bee.var.Ave, by="CAS_NO")
+B.Bee.var = merge(B.Bee.var,B.Bee.var.sd, by="CAS_NO")
+names(B.Bee.var) [c(2:4)] = c("N", "Mean", "sd")
+
+# Restrict to at least 5 cases per CAS
+B.Bee.var = B.Bee.var[B.Bee.var$N>3,] # 16 chemicals
+
+B.Bee.var$CV.Perc = 100*(B.Bee.var$Mean/B.Bee.var$sd)
+
+# Summary of CV%
+summary(B.Bee.var$CV.Perc)
+plot(B.Bee.var$N,B.Bee.var$CV.Perc)
+plot(log10(B.Bee.var$Mean), B.Bee.var$CV.Perc)
+
+#
+
+```
+
+
+# Correlations among variables
+
+## check the curated dataset
+
+```{r fig.width=8}
+Data.2 <- Data.2 %>% mutate(logTox = log(Observed.Response.Mean))
+mod = lm(log(Observed.Response.Mean) ~ CAS.Number + Conc.1.Type..Author. + Exposure.Type + Observed.Duration..Days., data = Data.2)
+summary(mod)
+car::Anova(mod) %>% pander::pander(.)
+```
+
+As shown in the Anova Table, none of the covariate variables have a significant effect on the observed response mean. 
+
+
+```{r fig.width=8}
+library(GGally)
+ggpairs(Data.2[,c("logTox","Conc.1.Type..Author.","Exposure.Type","Observed.Duration..Days.")])
+ggplot(data=Data.2,aes(x=Observed.Duration..Days.,y=log(Observed.Response.Mean)))+geom_point()
+
+ldat <- Data.2 %>% dplyr::select(c(CAS.Number , Conc.1.Type..Author., Exposure.Type,logTox)) %>% pivot_longer(!logTox,names_to="variables",values_to="value") 
+ggplot(ldat,aes(x=value,y=logTox))+geom_boxplot()+geom_point()+facet_wrap(~variables,scales = "free")+ theme(axis.text.x = element_text(angle = 90))
+```
+
+
+
+```{r}
+
+```
+
+
+## Other factors
+
+
+# Simulation based MDR 
+
+## Reproduce and Examine Belden's Approach
+
+Synergy can be concluded if an MDR is greater than 1. However, the toxicity of the mixture could be due to toxicological interaction or simply variability (cv) during toxicity testing.
+
+3.	Calculate the CV% of the LD50s per chemical, and compute summary statistics (median CV% and 95% CI for CV%) that are typical for these types of bee studies
+
+
+```{r}
+Data.2 %>%  summarise(mean_LD=mean(Observed.Response.Mean),sd_LD=sd(Observed.Response.Mean),cv=sd_LD/mean_LD,median_LD=median(Observed.Response.Mean))
+library(skimr)
+cv <- function(x){
+  sd(x)/mean(x)
+}
+my_skim <- skim_with(numeric = sfl(cv))
+Data.2 %>% select(c(CAS.Number , Conc.1.Type..Author., Exposure.Type,Observed.Response.Mean)) %>% my_skim()
+```
+
+
+```{r}
+cv_sum <- Data.2 %>% group_by(CAS.Number,Chemical.Name) %>% summarise(mean_LD=mean(Observed.Response.Mean),sd_LD=sd(Observed.Response.Mean),cv=sd_LD/mean_LD)
+cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% select(-c( n_missing,complete_rate)) %>% kable(.,format="pipe",digits=2)
+
+```
+
+
+```{r}
+Data.2 %>% group_by(CAS.Number,Chemical.Name) %>% my_skim(Observed.Response.Mean) %>% yank("numeric") %>% select(-c(skim_variable, n_missing,complete_rate)) %>% kable(.,format="pipe",digits=2)
+```
+
+## Simulation
+
+Perform simulations as in Belden and Brain to determine the 95th of MCR values that reject the Null Hypothesis that the MCR values is greater than 1.
+
+Values were generated for each toxicity test that would be conducted in a mixture study. For example, for a binary mixture AB, a value would be generated for compound A, compound B, and mixture AB.
+
+
+- assumed a log-normal distribution based on specific CV value and randomly generated effective concentrations for theoretical active ingredients and a formulation mixture centered around a "true" value of 1 (10 000 iterations).
+    - For example, for a binary mixture AB, a value would be generated for compound A, compound B, and mixture AB.  Each value was generated assuming a mean value 1.  
+- For each iteration, an MDR was calculated. 
+- The distribution of the resulting MDR values was then determined
+- We repeated this process for CVs of 60%, 100%, and 140% (could do more).
+- We also conducted the analysis for single, binary, and tertiary mixtures.
+
+
+Note that the assumption is that we can use cv and given mean to calculate mean and variance, which could then tranform to the log-mean and log-sd. 
+
+For each iteration, the resulting values for the active ingredients were used in *Concentration Addition Model* and by assuming a 1:1 mix the expected EC50 for the mixture was determined.
+
+The idea would be: using the simulations that you performed based on the different CV% levels used as reference (i.e., 70%, 100%, 180%), what is the proportion of samples that would be classified wrongly as synergistic (when we know they are additive) if using the following reference levels of threshold MDR: 1.25, 2, 3, 5.
+
+## Figure x
+
+
+
+## Figure 4
+
+
+
+```{r}
+library(readr)
+Chemicals_Table <- read_csv("~/Projects/beemixtox/data-raw/paper1/Chemicals.Table.csv")
+#View(Chemicals_Table)
+Chemlables <- unique(Chemicals_Table$Label)
+Chemlables
+MoAs <- unique(Chemicals_Table$MoA)
+MoAs
+```
+
+```{r}
+library(circlize)
+
+genColor <- function(x){
+  sapply(x,function(y){
+    if(abs(y)<log10(2)) return("#00FFFFFF") else{
+      if(y>log10(5)) return("darkgreen") else{
+        if(y<log10(0.2)) return("red") else{
+          if(y < log10(0.5)) return("#FF00FF") else{
+            return("green")
+          }
+        }
+      }
+    }
+    
+  })
+}
+col_fun = colorRamp2(c(log10(0.2),log10(0.5),0,log10(2),log10(5)), c("yellow","lightgreen", "#00FFFFFF", "lightblue","red"))
+longmat <- BCSdata %>% group_by(MoA.class.name)%>% summarise(medianLog10Q=median(log10Q))%>% mutate(class=cut(medianLog10Q,c(log10(0.2),log10(0.5),log10(2),log10(5))))%>%mutate(color=col_fun(medianLog10Q))%>% mutate(col2=genColor(medianLog10Q))
+circle1_MoA <- matrix(0,nrow=length(MoAs),ncol=length(MoAs))
+circle2_MoA <- matrix(0,nrow=length(MoAs),ncol=length(MoAs))
+col_MoA <- matrix("#00FFFFFF",nrow=length(MoAs),ncol=length(MoAs))
+rownames(circle1_MoA) <- colnames(circle1_MoA) <- MoAs
+rownames(col_MoA) <- colnames(col_MoA) <- MoAs
+for(i in 1:nrow(longmat)){
+  tmp <- longmat$MoA.class.name[i]
+  combo <- strsplit(as.vector(as.character(tmp)), " + ", fixed = TRUE)[[1]]
+  # circle1_MoA[combo[1],combo[2]] <- longmat$medianLog10Q[i]
+  # circle1_MoA[combo[2],combo[1]] <- longmat$medianLog10Q[i]
+  circle1_MoA[combo[1],combo[2]] <- 1
+  circle1_MoA[combo[2],combo[1]] <- 1
+  col_MoA[combo[2],combo[1]] <- longmat$col2[i]
+  col_MoA[combo[1],combo[2]] <- longmat$col2[i]
+  if(length(combo)>2){
+     circle1_MoA[combo[1],combo[3]] <- 1
+     circle1_MoA[combo[3],combo[1]] <- 1
+     circle1_MoA[combo[2],combo[3]] <- 1
+     circle1_MoA[combo[3],combo[2]] <- 1
+     col_MoA[combo[3],combo[1]] <- longmat$col2[i]
+     col_MoA[combo[3],combo[2]] <- longmat$col2[i]
+     col_MoA[combo[2],combo[3]] <- longmat$col2[i]
+     col_MoA[combo[1],combo[3]] <- longmat$col2[i]
+  }
+}
+
+
+chordDiagram(circle1_MoA,grid.col = 1:13, symmetric = TRUE, col = col_fun)
+
+chordDiagram(circle1_MoA,grid.col = 1:13, symmetric = TRUE, col = col_MoA)
+
+
+circle1_ChemLabel <- matrix(0,nrow=length(Chemlables),ncol=length(Chemlables))
+col_ChemLabel <- matrix("white",nrow=length(Chemlables),ncol=length(Chemlables))
+rownames(circle1_ChemLabel) <- colnames(circle1_ChemLabel) <- Chemlables
+rownames(col_ChemLabel) <- colnames(col_ChemLabel) <- Chemlables
+
+longmat <- BCSdata %>% group_by(Label.class.name)%>% summarise(medianLog10Q=median(log10Q))%>% mutate(class=cut(medianLog10Q,c(log10(0.2),log10(0.5),log10(2),log10(5))))%>% mutate(col2=genColor(medianLog10Q))
+for(i in 1:nrow(longmat)){
+  tmp <- longmat$Label.class.name[i]
+  combo <- strsplit(as.vector(as.character(tmp)), " + ", fixed = TRUE)[[1]]
+ # circle1_ChemLabel[combo[1],combo[2]] <- longmat$medianLog10Q[i]
+#   circle1_ChemLabel[combo[2],combo[1]] <- longmat$medianLog10Q[i]
+    circle1_ChemLabel[combo[1],combo[2]] <- 1
+  circle1_ChemLabel[combo[2],combo[1]] <- 1
+  col_ChemLabel[combo[2],combo[1]] <- longmat$col2[i]
+  col_ChemLabel[combo[1],combo[2]] <- longmat$col2[i]
+  if(length(combo)>2){
+     # circle1_ChemLabel[combo[1],combo[3]] <- longmat$medianLog10Q[i]
+     # circle1_ChemLabel[combo[3],combo[1]] <- longmat$medianLog10Q[i]
+     # circle1_ChemLabel[combo[2],combo[3]] <- longmat$medianLog10Q[i]
+     # circle1_ChemLabel[combo[3],combo[2]] <- longmat$medianLog10Q[i]
+     circle1_ChemLabel[combo[1],combo[3]] <- 1
+     circle1_ChemLabel[combo[3],combo[1]] <- 1
+     circle1_ChemLabel[combo[2],combo[3]] <- 1
+     circle1_ChemLabel[combo[3],combo[2]] <- 1
+     col_ChemLabel[combo[3],combo[1]] <- longmat$col2[i]
+     col_ChemLabel[combo[3],combo[2]] <- longmat$col2[i]
+     col_ChemLabel[combo[2],combo[3]] <- longmat$col2[i]
+     col_ChemLabel[combo[1],combo[3]] <- longmat$col2[i]
+  }
+}
+
+# chordDiagram(circle1_ChemLabel,grid.col = 1:10, symmetric = TRUE, col = col_fun)
+chordDiagram(circle1_ChemLabel,grid.col = 1:10, symmetric = TRUE, col = col_ChemLabel)
+
+
+```
+
+
+
+

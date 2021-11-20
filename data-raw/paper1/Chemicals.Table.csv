@@ -1,0 +1,29 @@
+Name,Short.name,chem.Type,IRAC/FRAC MoA,Chemistry,Label,MoA
+Beta-cyfluthrin,CYB,INS,3A,Pyrethroide,vsSCh,3A
+Bifenthrin,BFN,INS,3A,Pyrethroide,vsSCh,3A
+Clothianidin,CTD,INS,4A,Neonicotinoid,nAChR receptor agonist,4A
+Deltamethrin,DLT,INS,3A,Pyrethroide,vsSCh,3A
+Endosulfan,ENS,INS,2A,organochlorine,GABA-A receptor,2A
+Ethiprole,EPR,INS,2B,phenylpyrazole,GABA-A receptor,2B
+Etofenprox,ETF,INS,3A,Pyrethroide,vsSCh,3A
+Fenpropidin,FPD,FUN,G2,piperidine; unclassified fungicides,SBI: sterol biosynthesis,G2
+Fipronil,FPR,INS,2B,phenylpyrazole,GABA-A receptor,2B
+Fluoxastrobin,FXA,FUN,C3,strobilurine analog; strobilurin fungicides,"respiration (CIII, o-site)",C3
+Flupyradifurone,FPF,INS,4D,butenolide,nAChR receptor agonist,4D
+Imidacloprid,IMD,INS,4A,Neonicotinoid,nAChR receptor agonist,4A
+Isoflucypram,ISY,FUN,C2,pyrazolecarboxamide fungicides,respiration: SDH,C2
+Lambda-cyhalothrin,LCY,INS,3A,Pyrethroide,vsSCh,3A
+Methamidophos,MDP,INS,1B,phosphoramidothioate,AChE,1B
+Methiocarb,MTC,INS,1A,carbamate,AChE,1A
+Prothioconazole,PTZ,FUN,G1,triazole; conazole fungicides ,DMI,G1
+Prochloraz,PCZ,FUN,G1,imidazoles,DMI,G1
+Spiromesifen,SMF,INS,23,tetronic acid derivative,ACCase inhibitor (I),23
+Spirotetramat,SPT,INS,23,tetramic acid insecticides,ACCase inhibitor (I),23
+Spiroxamine,SPX,FUN,G2,spiroketalamine; unclassified fungicides,SBI: sterol biosynthesis,G2
+Tebuconazole,TBZ,FUN,G1,triazole; conazole fungicides ,DMI,G1
+Tetraniliprole,TTP,INS,28,anthranilamide; diamide insecticides,ryanodine receptor modulator,28
+Thiacloprid,TCP,INS,4A,Neonicotinoid,nAChR receptor agonist,4A
+Thiodicarb,TDC,INS,1A,carbamate,AChE,1A
+Transfluthrin,BFT,INS,3A,Pyrethroide,vsSCh,3A
+Triadimenol,TDL,FUN,G1,triazole; conazole fungicides ,DMI,G1
+Alpha-cypermethrin,ACY,INS,3A,Pyrethroide,vsSCh,3A
