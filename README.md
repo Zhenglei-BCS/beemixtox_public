@@ -32,7 +32,7 @@ until finished
 ## Authors
 
 * **Ismael M. Rodea Palomares** - [Ismael M. Rodea Palomares](mailto:ismaelm.rodeapalomares@bayer.com)
-* **Zhenglei Gao** - *Initial work* - [Zhenglei Gao](mailto:zhenglei.gao@bayer.com)
+* **Zhenglei Gao** - [Zhenglei Gao](mailto:zhenglei.gao@bayer.com)
 
 
 ## Acknowledgments
