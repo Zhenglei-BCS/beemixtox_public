@@ -22,6 +22,8 @@ library(knitr)
 
 ## Query from EPA-Ecotox
 
+The following filtering criteria was used to extract the relevant data form the EPA-Ecotox database. In this extraction, the dataset contains 576 CAS numbers. 
+
 - **Chemicals**
 - **Effect Measurements **
   - Mortality Group
@@ -39,7 +41,7 @@ library(knitr)
 	  - Lab
 - **Publication Options **
 
-Note in this level reduced to 576 CAS
+
 
 ```{r eval=FALSE}
 #Define and set paths
