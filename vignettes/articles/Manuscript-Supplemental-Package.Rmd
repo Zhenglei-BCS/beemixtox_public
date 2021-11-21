@@ -1,6 +1,9 @@
 ---
 title: "Bee Mixtox Supplemental Information"
-output: word_document
+output:
+  html_document:
+    df_print: paged
+    code_folding: hide
 ---
 
 ```{r, include = FALSE}
@@ -13,315 +16,168 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup,include=FALSE}
-library(beemixtox)
+library(beemixtox1)
 library(tidyverse)
 library(knitr)
-```
-
-# Data Pre-processing
-
-## Query from EPA-Ecotox
-
-The following filtering criteria was used to extract the relevant data form the EPA-Ecotox database. In this extraction, the dataset contains 576 CAS numbers. 
-
-- **Chemicals**
-- **Effect Measurements **
-  - Mortality Group
-	    - Mortality
-- **Endpoints **
-  - Concentration Based Endpoints
-	  - LD50
-- **Species **
-  - Name(s) / Number(s)
-	  - honey bee
-  - Kingdom: Animals
-  - Name Search Type: Common Name
-- **Test Conditions **
-  - Test Locations
-	  - Lab
-- **Publication Options **
-
-
-
-```{r eval=FALSE}
-#Define and set paths
-Dir_Data = "~/Projects/beemixtox/data-raw/"
-Data.SSD = read.csv(paste0(Dir_Data,"data/Copy of etc4373-sup-0002-supmat.csv"))
-## usethis::use_data(Data.SSD) ## The common-name of the EPA Ecotox DB.
-#Load data (USEPA internal not for publication)
-
-#Load data
-
-Data = read.csv(paste0(Dir_Data,"data/TerrestrialReport.csv"))
-## usethis::use_data("Data")
-length(unique(Data$CAS.Number))
-#578 CAS
-```
-
-- Selection
-    - Life stage: Adult
-    - Duration days <=2, restrict to 24 h and 48 h studies.
-    - Remove censored LDx. 
-    - Use CASes with no less than 3 observations. 29 Chemicals
-    - Retain only data with units in "AI mg/org","AI ng/org","AI ug/org","mg/bee","mg/org","ng/org","ug/bee","ug/org"
-    - Exposure type: "Oral via capsule","Spray"
-    - 
-- Curation
-    - Units transformed to microgram based. (mg, ng ==> ug)
-    
-
-
-## CV calculation
-
-- Restrict the database for chemicals with repeated entries (i.e., more than 3 or 5 LD50 for the same chemical) ==> 16 chemicals
-- 
-
-
-```{r eval=FALSE}
-#Subset dataset for relevant parameters
-Data.1 = Data
-Data.1 = Data.1[Data.1$Organism.Lifestage%in%c("Adult"),]
-
-#Subset for relevant exposure times
-Data.1$Observed.Duration..Days.[Data.1$Observed.Duration..Days.=="NR"] = NA
-Data.1$Observed.Duration..Days. = as.numeric(as.character(Data.1$Observed.Duration..Days.))
-
-# Restrict to 24 h & 48 h end-points
-Data.1 = Data.1[Data.1$Observed.Duration..Days.>=1 & Data.1$Observed.Duration..Days.<=2,]
-
-#Restrict to definitive LDx
-Data.1 = Data.1[Data.1$Observed.Response.Mean.Op%in%c(""),]
-
-Data.1 = droplevels(Data.1)
-
-length(unique(Data.1$CAS.Number))
-
-# How many end-points per CAS number?
-NPerCAS = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, length)
-NPerCAS = NPerCAS[order(NPerCAS$Observed.Response.Mean, decreasing = T),]
-
-# Restrict to more than 5 observations
-NPerCAS = NPerCAS[NPerCAS$Observed.Response.Mean>=3,]
-#29 compunts
-
-# Restrict Data.1 for these 29 compounds
-Data.1 = Data.1[Data.1$CAS.Number%in%c(NPerCAS$CAS.Number),]; Data.1 = droplevels(Data.1)
-
-# Homogenize units
-table(Data.1$Observed.Response.Units)
-
-## UNITS
-Data.1$Observed.Response.Mean = as.numeric(as.character(Data.1$Observed.Response.Mean))
-# Retain only useful units
-Data.1 = Data.1[Data.1$Observed.Response.Units%in%c("AI mg/org","AI ng/org","AI ug/org","mg/bee","mg/org","ng/org","ug/bee","ug/org"),]; Data.1 = droplevels(Data.1)
-
-#Transform mg to microgram
-Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI mg/org","mg/bee","mg/org")] = Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI mg/org","mg/bee","mg/org")]*1000 #to ug/bee
-Data.1$Observed.Response.Units[Data.1$Observed.Response.Units%in%c("AI mg/org","mg/bee","mg/org")] = "ug/bee"
-
-#ng to microgram
-Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI ng/org","ng/org")] = Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI ng/org","ng/org")]/1000 #to ug/bee
-Data.1$Observed.Response.Units[Data.1$Observed.Response.Units%in%c("AI ng/org","ng/org")] = "ug/bee"
-
-# Homogenize ng/bee
-Data.1$Observed.Response.Units[Data.1$Observed.Response.Units%in%c("AI ug/org","ug/bee","ug/org")] = "ug/bee"
-
-table(Data.1$Observed.Response.Units)
-Data.1 = droplevels(Data.1)
-
-# Exposure media
-table(Data.1$Exposure.Type)
-Data.1 = Data.1[!Data.1$Exposure.Type%in%c("Oral via capsule","Spray"),]; Data.1 = droplevels(Data.1)
+library(patchwork)
 ```
 
 
-```{r eval=FALSE}
-# Approximate variability
-Bee.var.N = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, length)
-Bee.var.Ave = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, mean)
-Bee.var.sd = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, sd)
+# BCS dataset Analysis
 
-# Merge
-Bee.var = merge(Bee.var.N,Bee.var.Ave, by="CAS.Number")
-Bee.var = merge(Bee.var,Bee.var.sd, by="CAS.Number")
-names(Bee.var) [c(2:4)] = c("N", "Mean", "sd")
-
-# Restrict to at least 5 cases per CAS
-Bee.var = Bee.var[Bee.var$N>3,] # 16 chemicals
-
-Bee.var$CV.Perc = 100*(Bee.var$Mean/Bee.var$sd)
-Bee.var = merge(Bee.var, Data.SSD[,c(1,3)], by.x = "CAS.Number", by.y = "CAS.", all.x = T)
-Bee.var = Bee.var[order(Bee.var$N, decreasing = T),]
-
-# Summary of CV%
-summary(Bee.var)
-
-# Check for independency of N and Mean
-plot(Bee.var$N,Bee.var$CV.Perc)
-plot(log10(Bee.var$N),Bee.var$CV.Perc)
-plot(log10(Bee.var$Mean), Bee.var$CV.Perc)
-
-# Which chemicals do we have represented?
-
-#restrict Data.1 to the selected CAS.N
-Data.2 = Data.1
-Data.2 = Data.2[Data.2$CAS.Number%in%Bee.var$CAS.Number,]; Data.2 = droplevels(Data.2)
-Data.2$CAS.Number = as.character(Data.2$CAS.Number)
-
-# Check consistency again
-table(Data.2$Chemical.Grade)
-# Chemical grade is not reported in most cases
-table(Data.2$Organism.Lifestage)
-table(Data.2$Exposure.Type)
-table(Data.2$Number.of.Doses)
-table(Data.2$Observed.Duration..Days.)
-```
-
-
-```{r eval=FALSE}
-aov.1 = aov(Observed.Response.Mean ~ CAS.Number + Conc.1.Type..Author. + Exposure.Type + Observed.Duration..Days., data = Data.2)
-summary(aov.1)
-
-
-# Save reference list only
-Data.2.Ref = unique(Data.2[,c(70,71,72,73,74)])
-##usethis::use_data(Data.2)
-write.csv(Data.2.Ref, file = "data/Data.2.Ref_ECOTOX_BeeLD50_Curated.csv", row.names = F)
-```
-
- 
-
-```{r eval=FALSE,include=FALSE}
-## Analysis of Data.B (USEPA internal, not for external use)
-Data.B.1 = Data.B[Data.B$GUIDELINE=="141-1",] #retrict to relevant guideline - relevant Guideline: 141-1
-Data.B.1 = droplevels(Data.B.1)
-table(Data.B.1$TAXA)
-table(Data.B.1$TGL)
-Data.B.1$TOXICITY = as.numeric(as.character(Data.B.1$TOXICITY))
-Data.B.1 = Data.B.1[complete.cases(Data.B.1$TOXICITY),]
-
-#Only definitive values
-Data.B.1 = Data.B.1[Data.B.1$TGL=="",]
-B.Bee.var.N = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, length)
-B.Bee.var.Ave = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, mean)
-B.Bee.var.sd = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, sd)
-
-# Merge
-B.Bee.var = merge(B.Bee.var.N,B.Bee.var.Ave, by="CAS_NO")
-B.Bee.var = merge(B.Bee.var,B.Bee.var.sd, by="CAS_NO")
-names(B.Bee.var) [c(2:4)] = c("N", "Mean", "sd")
-
-# Restrict to at least 5 cases per CAS
-B.Bee.var = B.Bee.var[B.Bee.var$N>3,] # 16 chemicals
-
-B.Bee.var$CV.Perc = 100*(B.Bee.var$Mean/B.Bee.var$sd)
-
-# Summary of CV%
-summary(B.Bee.var$CV.Perc)
-plot(B.Bee.var$N,B.Bee.var$CV.Perc)
-plot(log10(B.Bee.var$Mean), B.Bee.var$CV.Perc)
-
-#
-
-```
-
-
-# Correlations among variables
-
-## check the curated dataset
-
-```{r fig.width=8}
-Data.2 <- Data.2 %>% mutate(logTox = log(Observed.Response.Mean))
-mod = lm(log(Observed.Response.Mean) ~ CAS.Number + Conc.1.Type..Author. + Exposure.Type + Observed.Duration..Days., data = Data.2)
-summary(mod)
-car::Anova(mod) %>% pander::pander(.)
-```
-
-As shown in the Anova Table, none of the covariate variables have a significant effect on the observed response mean. 
-
-
-```{r fig.width=8}
-library(GGally)
-ggpairs(Data.2[,c("logTox","Conc.1.Type..Author.","Exposure.Type","Observed.Duration..Days.")])
-ggplot(data=Data.2,aes(x=Observed.Duration..Days.,y=log(Observed.Response.Mean)))+geom_point()
-
-ldat <- Data.2 %>% dplyr::select(c(CAS.Number , Conc.1.Type..Author., Exposure.Type,logTox)) %>% pivot_longer(!logTox,names_to="variables",values_to="value") 
-ggplot(ldat,aes(x=value,y=logTox))+geom_boxplot()+geom_point()+facet_wrap(~variables,scales = "free")+ theme(axis.text.x = element_text(angle = 90))
-```
-
-
+## Generate Figure 1
 
 ```{r}
 
-```
-
-
-## Other factors
-
-
-# Simulation based MDR 
-
-## Reproduce and Examine Belden's Approach
-
-Synergy can be concluded if an MDR is greater than 1. However, the toxicity of the mixture could be due to toxicological interaction or simply variability (cv) during toxicity testing.
-
-3.	Calculate the CV% of the LD50s per chemical, and compute summary statistics (median CV% and 95% CI for CV%) that are typical for these types of bee studies
-
-
-```{r}
-Data.2 %>%  summarise(mean_LD=mean(Observed.Response.Mean),sd_LD=sd(Observed.Response.Mean),cv=sd_LD/mean_LD,median_LD=median(Observed.Response.Mean))
-library(skimr)
-cv <- function(x){
-  sd(x)/mean(x)
-}
-my_skim <- skim_with(numeric = sfl(cv))
-Data.2 %>% select(c(CAS.Number , Conc.1.Type..Author., Exposure.Type,Observed.Response.Mean)) %>% my_skim()
+p1 <- ggplot(data=BCSdata, aes(log10Q, colour = Time)) +
+  stat_ecdf(pad = F, geom ="point") +
+  stat_ecdf(pad = F, geom ="step") +
+  geom_vline(xintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=log10(0.5), xmax=log10(2), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  annotate("rect", xmin=log10(0.2), xmax=log10(5), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.1,0.1,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        # legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+        legend.position="top")+
+  labs(x="log10(MDR)",y="Prob")#+ggtitle("Actual BCS Data")
 ```
 
 
 ```{r}
-cv_sum <- Data.2 %>% group_by(CAS.Number,Chemical.Name) %>% summarise(mean_LD=mean(Observed.Response.Mean),sd_LD=sd(Observed.Response.Mean),cv=sd_LD/mean_LD)
-cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% select(-c( n_missing,complete_rate)) %>% kable(.,format="pipe",digits=2)
-
+p2 <- ggplot(data=BCSdata, aes(log10Q, colour = Exposure.Type)) +
+  stat_ecdf(pad = F, geom ="point") +
+  stat_ecdf(pad = F, geom ="step") +
+  geom_vline(xintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=log10(0.5), xmax=log10(2), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  annotate("rect", xmin=log10(0.2), xmax=log10(5), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.1,0.1,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        # legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+        legend.position="top")+
+      labs(x="log10(MDR)",y="Prob")
 ```
 
 
 ```{r}
-Data.2 %>% group_by(CAS.Number,Chemical.Name) %>% my_skim(Observed.Response.Mean) %>% yank("numeric") %>% select(-c(skim_variable, n_missing,complete_rate)) %>% kable(.,format="pipe",digits=2)
+p3 <- ggplot(BCSdata, aes(x=as.factor(CLASSIFICATION),y=log10Q))+
+  # Plot9<-ggplot(Data,aes(x=as.factor(N.combo.class),y=log10Q))+
+  geom_boxplot(fill="grey75")+
+  geom_jitter(width = 0.2, alpha=0.7, aes(colour = Exposure.Type)) +
+  # geom_boxplot(aes(fill=combo.class.name))+
+  # geom_boxplot(aes(fill=combo.Type.name))+
+  geom_hline(yintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.5), ymax=log10(2), alpha=0.2) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.2), ymax=log10(5), alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.1,0.1,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        # legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+        legend.position="top")+
+  labs(x="Matching class",y="log10(MDR)")
 ```
 
-## Simulation
 
-Perform simulations as in Belden and Brain to determine the 95th of MCR values that reject the Null Hypothesis that the MCR values is greater than 1.
+```{r}
+p1 + p2 +p3+
+  # plot_layout(guides = 'collect') +
+  plot_annotation(tag_levels = 'A')
+if(interactive()) ggsave("../../inst/manuscript/Paper_Figure1_ecdfs.pdf", width=12, height = 5, units = "in")
+if(interactive()) ggsave("../../inst/manuscript/Paper_Figure1_ecdfs.png", width=12, height = 5, units = "in")
+```
 
-Values were generated for each toxicity test that would be conducted in a mixture study. For example, for a binary mixture AB, a value would be generated for compound A, compound B, and mixture AB.
+### ECDF comparison
 
+We explore the simulated MDRs versus the experimental MDRs that we got. 
+- plot together both ECDFs and see how much overlap they had. 
 
-- assumed a log-normal distribution based on specific CV value and randomly generated effective concentrations for theoretical active ingredients and a formulation mixture centered around a "true" value of 1 (10 000 iterations).
-    - For example, for a binary mixture AB, a value would be generated for compound A, compound B, and mixture AB.  Each value was generated assuming a mean value 1.  
-- For each iteration, an MDR was calculated. 
-- The distribution of the resulting MDR values was then determined
-- We repeated this process for CVs of 60%, 100%, and 140% (could do more).
-- We also conducted the analysis for single, binary, and tertiary mixtures.
+```{r}
+p0 <- ggplot(data=BCSdata, aes(log10Q)) +
+  stat_ecdf(pad = F, geom ="point") +
+  stat_ecdf(pad = F, geom ="step") +
+  geom_vline(xintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=log10(0.5), xmax=log10(2), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  annotate("rect", xmin=log10(0.2), xmax=log10(5), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.1,0.1,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+  labs(x="log10(MDR)",y="Fraction", title= "Cumulative probability")
 
+p0
+```
 
-Note that the assumption is that we can use cv and given mean to calculate mean and variance, which could then tranform to the log-mean and log-sd. 
+```{r}
+cvs <- c(0.3,0.6,1,1.4,3)
+mdrs <- c(1.25,2,3,5)
+Nsim <- 10000
+Nout <- 100
+```
 
-For each iteration, the resulting values for the active ingredients were used in *Concentration Addition Model* and by assuming a 1:1 mix the expected EC50 for the mixture was determined.
+```{r}
+res2 <- simCVn(cvs=cvs,mean_sim=1,p=c(0.5,0.5),Nsim=Nsim)
+res2$CV = plyr::mapvalues(res2$CV,from=unique(res2$CV),to=paste0(as.numeric(unique(res2$CV))*100,"%"))
+```
 
-The idea would be: using the simulations that you performed based on the different CV% levels used as reference (i.e., 70%, 100%, 180%), what is the proportion of samples that would be classified wrongly as synergistic (when we know they are additive) if using the following reference levels of threshold MDR: 1.25, 2, 3, 5.
+```{r}
+p0+stat_ecdf(data=res2,aes(x=log10(MDR),col=CV))#+geom_ribbon(data=res2,aes(x=log10(MDR),col=CV,ymin = ..y..-2,ymax = ..y..+2), stat = "ecdf",alpha=0.2)
+if(interactive()) ggsave("../../inst/manuscript/ECDF_comparion.png", width=12, height = 5, units = "in")
+```
 
-## Figure x
+```{r}
+res2.1 <- rbind(res2,data.frame(CV="BCS Data",MDR=BCSdata$quotient))
+ggplot(res2.1,aes(sample = log10(MDR), color=CV))+stat_qq()
+if(interactive()) ggsave("../../inst/manuscript/ECDF_comparion_qq.png", width=12, height = 5, units = "in")
+```
 
+### Figure 2
 
+```{r}
+ggplot(BCSdata,aes(x=combo.name,y=log10Q))+
+  geom_boxplot(fill="grey75", outlier.shape = NA)+
+  geom_jitter(width = 0.2, alpha=0.7, aes(colour = Exposure.Type)) +
+  # geom_boxplot(aes(fill=combo.class.name))+
+  # geom_boxplot(aes(fill=combo.Type.name))+
+  geom_hline(yintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.5), ymax=log10(2), alpha=0.2) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.2), ymax=log10(5), alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.5,0.3,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        # legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+        legend.position="top")+
+  labs(x=NULL,y="log10(MDR)")+
+  coord_flip(ylim = c(min(BCSdata$log10Q, na.rm = T), max(BCSdata$log10Q, na.rm = T)))
+```
 
-## Figure 4
+### Figure 3
+
+```{r}
+ggplot(BCSdata,aes(x=Label.class.name,y=log10Q))+
+  geom_boxplot(fill="grey75", outlier.shape = NA)+
+  geom_jitter(width = 0.2, alpha=0.7, aes(colour = Exposure.Type, share = )) +
+  # geom_boxplot(aes(fill=Label.class.name))+
+  # geom_boxplot(aes(fill=combo.Type.name))+
+  geom_hline(yintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.5), ymax=log10(2), alpha=0.2) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.2), ymax=log10(5), alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.5,0.3,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        # legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+        legend.position="top")+
+  labs(x=NULL,y="log10(MDR)")+
+  coord_flip(ylim = c(min(BCSdata$log10Q, na.rm = T), max(BCSdata$log10Q, na.rm = T)))
+```
+
+## Genrate Figure 4
 
 
 
 ```{r}
 library(readr)
-Chemicals_Table <- read_csv("~/Projects/beemixtox/data-raw/paper1/Chemicals.Table.csv")
+Chemicals_Table <- read_csv("~/Projects/beemixtox_public/data-raw/paper1/Chemicals.Table.csv")
 #View(Chemicals_Table)
 Chemlables <- unique(Chemicals_Table$Label)
 Chemlables
@@ -334,11 +190,11 @@ library(circlize)
 
 genColor <- function(x){
   sapply(x,function(y){
-    if(abs(y)<log10(2)) return("#00FFFFFF") else{
-      if(y>log10(5)) return("darkgreen") else{
-        if(y<log10(0.2)) return("red") else{
-          if(y < log10(0.5)) return("#FF00FF") else{
-            return("green")
+    if(abs(y)<log10(2)) return("#D6E2EE") else{ ## orange white
+      if(y>log10(5)) return("#1F525E") else{ ## Blue Diane
+        if(y<log10(0.2)) return("#AD323C") else{ ## well red
+          if(y < log10(0.5)) return("#FAA5B5") else{ ## Rose bud
+            return("#2D8833") ## Forest Green
           }
         }
       }
@@ -375,11 +231,13 @@ for(i in 1:nrow(longmat)){
 }
 
 
-chordDiagram(circle1_MoA,grid.col = 1:13, symmetric = TRUE, col = col_fun)
+## chordDiagram(circle1_MoA,grid.col = 1:13, symmetric = TRUE, col = col_fun)
 
 chordDiagram(circle1_MoA,grid.col = 1:13, symmetric = TRUE, col = col_MoA)
+```
 
 
+```{r}
 circle1_ChemLabel <- matrix(0,nrow=length(Chemlables),ncol=length(Chemlables))
 col_ChemLabel <- matrix("white",nrow=length(Chemlables),ncol=length(Chemlables))
 rownames(circle1_ChemLabel) <- colnames(circle1_ChemLabel) <- Chemlables
@@ -410,6 +268,16 @@ for(i in 1:nrow(longmat)){
      col_ChemLabel[combo[1],combo[3]] <- longmat$col2[i]
   }
 }
+## Note that vsSCh and DMI appear in binary mixture and tietary mixture, the color was covered later, has to manually re-define. 
+i <- 1
+tmp <- longmat$Label.class.name[i]
+  combo <- strsplit(as.vector(as.character(tmp)), " + ", fixed = TRUE)[[1]]
+ # circle1_ChemLabel[combo[1],combo[2]] <- longmat$medianLog10Q[i]
+#   circle1_ChemLabel[combo[2],combo[1]] <- longmat$medianLog10Q[i]
+    circle1_ChemLabel[combo[1],combo[2]] <- 1
+  circle1_ChemLabel[combo[2],combo[1]] <- 1
+  col_ChemLabel[combo[2],combo[1]] <- longmat$col2[i]
+  col_ChemLabel[combo[1],combo[2]] <- longmat$col2[i]
 
 # chordDiagram(circle1_ChemLabel,grid.col = 1:10, symmetric = TRUE, col = col_fun)
 chordDiagram(circle1_ChemLabel,grid.col = 1:10, symmetric = TRUE, col = col_ChemLabel)
@@ -419,4 +287,385 @@ chordDiagram(circle1_ChemLabel,grid.col = 1:10, symmetric = TRUE, col = col_Chem
 
 
 
+
+
+
+
+# Simulation based MDR analysis
+
+Synergy can be concluded if an MDR is greater than 1. However, the toxicity of the mixture could be due to toxicological interaction or simply variability (cv) during toxicity testing. To explore the relationship between simple variability and MDR, we use simulation based methods where we can assume a variability of each mixture component and for the mixture, then check the possibilities to distinguish between true synergistic effect and variability of the additive mixture components. 
+
+For generating MDR values for perfectly additive mixtures, we followed the approach proposed by Belden and Brain (2018).  Distributions of MDR values were generated that would occur for the combinations of perfectly additive chemicals (i.e., the same chemical mixed with itself) in which the variability in the resulting MDRs comes only from experimental variability. For this we assumed a log-normal distribution of LD50 values with a mean of 1 µg/bee, and a defined CV% (30%, 60%, 100%, 140%, and 300%) and we randomly generated LD50s for two (for binary mixtures) or three (for tertiary mixtures) active substances and their combinations for 12000 simulations. For each of the 12000 simulations, an MDR was calculated, and the distribution of the MDRs was determined. The 95% of the MDR distributions is the MDR value that ensures a false positive rate equal to 5% (alpha 0.05). 
+
+
+In Belden and Brain’s approach the simulation assumption is that the mixture of the same chemical does not have non-additive effect, which is the null hypothesis in the testing. However, it does not consider the case when the alternative hypothesis is true. We further extended this framework to be able to investigate the true positive rates (power of the test to detect a true positive that would be achieved when using different MDR thresholds). For this, LD50 means with a defined reduction factor were assumed for the mixture LD50 distribution as follows: for the 12000 simulation runs (for the case in which a true non-additive effect was modeled), LD50s for the single component in the mixture were sampled from a log-normal distribution with mean of 1 µg/bee, and a defined CV%, whereas the LD50s for the mixture were generated from a log-normal distribution with mean of 1/N µg/bee (N=2,5,10) and the same CV%. Note that the simulation truth is that there is synergism effect and the test using the given MDR should have enough power to identify the difference in toxicity between the mixture and the single components. The use of different MDR threshold and their corresponding true positive rates were then investigated. 
+
+
+
+## Reproduce and Examine Belden's Approach
+
+
+### CV of the experimental data
+
+- Calculate the CV% of the LD50s per chemical, and compute summary statistics (median CV% and 95% CI for CV%) that are typical for these types of bee studies
+
+```{r}
+library(skimr)
+cv <- function(x){
+  sd(x)/mean(x)
+}
+my_skim <- skim_with(numeric = sfl(cv))
+
+```
+
+
+```{r}
+cv_sum <- Data.2 %>% group_by(CAS.Number,Chemical.Name) %>% summarise(mean_LD=mean(Observed.Response.Mean),sd_LD=sd(Observed.Response.Mean),cv=sd_LD/mean_LD)
+cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="Summary stats for overall CAS LD mean, sd, and CV ")%>%kableExtra::kable_classic()
+
+```
+
+
+```{r}
+Data.2 %>% group_by(CAS.Number,Chemical.Name) %>% my_skim(Observed.Response.Mean) %>% yank("numeric") %>% select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="Summary stats for LD mean, sd, and CV for each CAS")%>%kableExtra::kable_classic()
+```
+
+
+
+
+### Simulation based Belden and Brian (2018)
+
+Perform simulations as in Belden and Brain to determine the 95th of MCR values that reject the Null Hypothesis that the MCR values is greater than 1.
+
+Values were generated for each toxicity test that would be conducted in a mixture study. For example, for a binary mixture AB, a value would be generated for compound A, compound B, and mixture AB.
+
+
+- assumed a log-normal distribution based on specific CV value and randomly generated effective concentrations for theoretical active ingredients and a formulation mixture centered around a "true" value of 1 (10 000 iterations).
+    - For example, for a binary mixture AB, a value would be generated for compound A, compound B, and mixture AB.  Each value was generated assuming a mean value 1.  
+- For each iteration, an MDR was calculated. 
+- The distribution of the resulting MDR values was then determined
+- We repeated this process for CVs of 60%, 100%, and 140% (could do more).
+- We also conducted the analysis for single, binary, and tertiary mixtures.
+
+
+Note that the assumption is that we can use cv and given mean to calculate mean and variance, which could then tranform to the log-mean and log-sd. 
+
+For each iteration, the resulting values for the active ingredients were used in *Concentration Addition Model* and by assuming a 1:1 mix the expected EC50 for the mixture was determined.
+
+The idea would be: using the simulations that you performed based on the different CV% levels used as reference (i.e., 70%, 100%, 180%), what is the proportion of samples that would be classified wrongly as synergistic (when we know they are additive) if using the following reference levels of threshold MDR: 1.25, 2, 3, 5.
+
+
+```{r eval=F}
+mean_sim <- 1
+cv <- c(0.6,1,1.4)
+sd_sim <- cv*mean_sim
+v_sim <- sd_sim^2
+mu <- log(mean_sim/sqrt(1+v_sim/mean_sim^2))
+sigma <- sqrt(log(1+v_sim/mean_sim^2))
+```
+
+```{r eval=F}
+  MDRs <- sapply(1:Nsim,function(i){
+    ECx <- rlnorm(nmix+1,meanlog = mu,sdlog=sigma)
+    ECx_mix <- 1/(sum(p/ECx[1:nmix]))
+    MDR <- ECx_mix/(ECx[1+nmix])
+    MDR
+  })
+```
+
+
+For each iteration, the resulting values for the active ingredients were used in *Concentration Addition Model* and by assuming a 1:1 mix the expected EC50 for the mixture was determined.
+
+The idea would be: using the simulations that you performed based on the different CV% levels used as reference (i.e., 70%, 100%, 180%), what is the proportion of samples that would be classified wrongly as synergistic (when we know they are additive) if using the following reference levels of threshold MDR: 1.25, 2, 3, 5.
+
+```{r}
+cvs <- c(0.3,0.6,1,1.4,3)
+mdrs <- c(1.25,2,3,5)
+Nsim <- 10000
+Nout <- 100
+```
+
+```{r}
+res1 <- simCVn(cvs=cvs,mean_sim=1,p=1,Nsim=Nsim)
+
+c1 <-res1%>%group_by(CV)%>% nest() %>% mutate(confusion=purrr::map(data,function(df) sapply(mdrs,function(x) sum(df>x)/Nsim)))%>% mutate(Mixture=1) %>% dplyr::select(-data) %>% unnest(cols=c(confusion)) %>% ungroup %>% mutate(cutoff=rep(mdrs,length(cvs))) %>% pivot_wider(names_from = cutoff,names_prefix="MDR>",values_from=confusion)
+
+r1 <- res1%>%group_by(CV)%>% summarise(mean=mean(MDR),q95=quantile(MDR,0.95)) %>% mutate(Mixture=1)
+
+res1$CV <- plyr::mapvalues(res1$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+r1$CV <- plyr::mapvalues(r1$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+res1$CV <- factor(res1$CV,levels=unique(res1$CV))
+r1$CV <- factor(r1$CV,levels=unique(r1$CV))
+ggplot(res1, aes(MDR,col=CV)) + stat_ecdf(geom = "point")+xlim(c(1,35))+geom_text(data=r1,aes(x=q95,y=seq(0.1,0.9,length=5),label = paste(formatC(q95)),col=CV))+geom_vline(data=r1,aes(xintercept = q95,col=CV),lty=2)
+
+ggplot(res1, aes(MDR,col=CV)) + geom_density()+xlim(c(0,35))+scale_x_log10()
+
+
+res2 <- simCVn(cvs=cvs,mean_sim=1,p=c(0.5,0.5),Nsim=Nsim)
+
+c2 <-res2%>%group_by(CV)%>% nest() %>% mutate(confusion=purrr::map(data,function(df) sapply(mdrs,function(x) sum(df>x)/Nsim)))%>% mutate(Mixture=2) %>% dplyr::select(-data) %>% unnest(cols=c(confusion)) %>% ungroup %>% mutate(cutoff=rep(mdrs,length(cvs))) %>% pivot_wider(names_from = cutoff,names_prefix="MDR>",values_from=confusion)
+
+r2 <- res2%>%group_by(CV)%>% summarise(mean=mean(MDR),q95=quantile(MDR,0.95))%>% mutate(Mixture=2)
+# ggplot(res2, aes(MDR,col=CV)) + stat_ecdf(geom = "point")+xlim(c(1,7))+ylab("")
+res2$CV <- plyr::mapvalues(res2$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+r2$CV <- plyr::mapvalues(r2$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+res2$CV <- factor(res2$CV,levels=unique(res2$CV))
+r2$CV <- factor(r2$CV,levels=unique(r2$CV))
+
+p_sim_H0 <- ggplot(res2, aes(MDR,col=CV)) + stat_ecdf(geom = "step")+xlim(c(1,8))+ylab("")+geom_text(data=r2,aes(x=q95,y=seq(0.1,0.9,length=5),label = paste(formatC(q95)),col=CV))+geom_vline(data=r2,aes(xintercept = q95,col=CV),lty=2)
+p_sim_H0
+
+
+ggplot(res2, aes(MDR,col=CV)) + geom_density()+scale_x_log10()+geom_vline(data=r2,aes(xintercept = q95,col=CV),lty=2)+geom_text(data=r2,aes(x=q95,y=seq(0.5,2,length=5),label = paste(formatC(q95)),col=CV))
+```
+
+
+```{r}
+res2 <- simCVn(cvs=cvs,mean_sim=1,p=c(0.5,0.5),Nsim=Nsim,reduction = 0.9)
+
+c2 <-res2%>%group_by(CV)%>% nest() %>% mutate(confusion=purrr::map(data,function(df) sapply(mdrs,function(x) sum(df>x)/Nsim)))%>% mutate(Mixture=2) %>% dplyr::select(-data) %>% unnest(cols=c(confusion)) %>% ungroup %>% mutate(cutoff=rep(mdrs,length(cvs))) %>% pivot_wider(names_from = cutoff,names_prefix="MDR>",values_from=confusion)
+
+r2 <- res2%>%group_by(CV)%>% summarise(mean=mean(MDR),q95=quantile(MDR,0.95))%>% mutate(Mixture=2)
+# ggplot(res2, aes(MDR,col=CV)) + stat_ecdf(geom = "point")+xlim(c(1,7))+ylab("")
+res2$CV <- plyr::mapvalues(res2$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+r2$CV <- plyr::mapvalues(r2$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+res2$CV <- factor(res2$CV,levels=unique(res2$CV))
+r2$CV <- factor(r2$CV,levels=unique(r2$CV))
+p_sim_HA <- ggplot(res2, aes(MDR,col=CV)) + stat_ecdf(geom = "step")+xlim(c(1,8))+ylab("")+geom_text(data=r2,aes(x=q95,y=seq(0.1,0.9,length=5),label = paste(formatC(q95)),col=CV))+geom_vline(data=r2,aes(xintercept = q95,col=CV),lty=2)
+
+```
+
+```{r inlcude=FALSE}
+p_sim_HA+ggtitle("Simulation Truth: Redcution Factor is 10")
+gridExtra::grid.arrange(p_sim_H0,p_sim_HA)
+```
+
+
+
+```{r}
+res3 <- simCVn(cvs=cvs,mean_sim=1,p=c(1/3,1/3,1/3),Nsim=Nsim)
+
+
+c3 <-res3%>%group_by(CV)%>% nest() %>% mutate(confusion=purrr::map(data,function(df) sapply(mdrs,function(x) sum(df>x)/Nsim)))%>% mutate(Mixture=3) %>% dplyr::select(-data) %>% unnest(cols=c(confusion)) %>% ungroup %>% mutate(cutoff=rep(mdrs,length(cvs))) %>% pivot_wider(names_from = cutoff,names_prefix="MDR>",values_from=confusion)
+
+r3 <- res3%>%group_by(CV)%>% summarise(mean=mean(MDR),q95=quantile(MDR,0.95))%>% mutate(Mixture=3)
+
+res3$CV <- plyr::mapvalues(res3$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+r3$CV <- plyr::mapvalues(r3$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+res3$CV <- factor(res3$CV,levels=unique(res3$CV))
+r3$CV <- factor(r3$CV,levels=unique(r3$CV))
+## ggplot(res3, aes(MDR,col=CV)) + stat_ecdf(geom = "point")+xlim(c(1,7))+ylab("")
+ggplot(res3, aes(MDR,col=CV)) + stat_ecdf(geom = "step")+xlim(c(1,15))+ylab("")+geom_text(data=r3,aes(x=q95,y=seq(0.1,0.9,length=5),label = paste(formatC(q95)),col=CV))+geom_vline(data=r3,aes(xintercept = q95,col=CV),lty=2)+ggtitle("Tertiary Mixtures")
+ggplot(res3, aes(MDR,col=CV)) + geom_density()+scale_x_log10()+geom_text(data=r3,aes(x=q95,y=seq(0.1,2,length=5),label = paste(formatC(q95)),col=CV))+geom_vline(data=r3,aes(xintercept = q95,col=CV),lty=2)+ggtitle("Tertiary Mixtures")
+```
+
+
+```{r}
+rbind(c1,c2,c3) %>% knitr::kable(.,digits=3, format = "pipe")
+confusion <- rbind(c1,c2,c3) 
+confusion$CV <- plyr::mapvalues(confusion$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+confusion$CV <- factor(confusion$CV,levels=unique(r2$CV))
+confusion <- confusion %>% pivot_longer(cols = starts_with("MDR"))
+ggplot(confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.05,lty=2)+xlab("MDR Cutoff")
+```
+
+
+
+```{r}
+res <- rbind(r1,r2,r3)
+d95 <- res %>% select(-mean) %>% pivot_wider(names_from = CV,names_prefix="CV=",values_from=q95) ## %>% knitr::kable(.)
+```
+
+
+
+```{r}
+dmean <- res%>% select(-q95) %>% pivot_wider(names_from = CV,names_prefix="CV=",values_from=mean) ## %>% knitr::kable(.)
+
+```
+
+```{r}
+knitr::kable(
+  list(dmean, d95),
+  caption = 'Mean and 95th %-tile',
+  booktabs = TRUE, valign = 't',format = "simple",digits = 3
+)
+```
+
+
+```{r}
+d95 %>% knitr::kable(.,caption="Table: 95th %tile of the Simulated MDRS based on additive mixture assumption (Same compound is being mixed in the mixture)",digits = 2)%>%kableExtra::kable_classic()
+```
+
+### Extending Belden and Brian (2018) to using alternative assumption as simulation truth
+
+**Confusion matrix and quantiles for MDR**
+
+```{r}
+Res_Null <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
+                         mdrs=c(1.25,2,3,5),
+                         Nsim=12000,
+                         synergy=F,reduction=0.5,q=0.95)
+ggplot(Res_Null$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.05,lty=2)+xlab("MDR Cutoff")
+
+Res_Alt <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
+                         mdrs=c(1.25,2,3,5),
+                         Nsim=12000,
+                         synergy=T,reduction=0.5,q=0.95)
+
+ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Reduction Factor of 2")
+Res_Alt$confusion$Truth <- "synergy"
+Res_Null$confusion$Truth <- "No synergy"
+tmp <- rbind(Res_Null$confusion,Res_Alt$confusion)%>%pivot_wider(names_from = Truth,values_from=value)%>%mutate(Decision="Reject H0")
+
+confusion <- rbind(tmp,tmp %>% mutate(`No synergy`=1-`No synergy`,synergy=1-synergy,Decision="Do not reject H0"))
+
+conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr::map(data,function(df){
+  df[2:1,c(3,1,2)]%>%mutate(`No synergy`=paste0(c("True Negative=","False Positive="),formatC(`No synergy`*100,digits = 1,format="f"),"%"),synergy=paste0(c("False Negative=","True Positive="),formatC(synergy*100,digits = 1,format="f"),"%"))
+}))%>%unnest(cols = c(data))
+library(kableExtra)
+
+## conf %>% knitr::kable(., "markdown")
+```
+
+
+```{r}
+conf %>% knitr::kable(., "html",caption="reduction factor is 2") %>% kable_paper(full_width = F) %>% collapse_rows
+
+
+```
+
+
+
+
+```{r}
+Res_Alt <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
+                         mdrs=c(1.25,2,3,5),
+                         Nsim=12000,
+                         synergy=T,reduction=0.8,q=0.95)
+
+ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Reduction Factor of 5")+xlab("MDR Cutoff")
+Res_Alt$confusion$Truth <- "synergy"
+
+Res_Null$confusion$Truth <- "No synergy"
+tmp <- rbind(Res_Null$confusion,Res_Alt$confusion)%>%pivot_wider(names_from = Truth,values_from=value)%>%mutate(Decision="Reject H0")
+
+confusion <- rbind(tmp,tmp %>% mutate(`No synergy`=1-`No synergy`,synergy=1-synergy,Decision="Do not reject H0"))
+
+conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr::map(data,function(df){
+  df[2:1,c(3,1,2)]%>%mutate(`No synergy`=paste0(c("True Negative=","False Positive="),formatC(`No synergy`*100,digits = 1,format="f"),"%"),synergy=paste0(c("False Negative=","True Positive="),formatC(synergy*100,digits = 1,format="f"),"%"))
+}))%>%unnest(cols = c(data))
+library(kableExtra)
+
+## conf %>% knitr::kable(., "markdown")
+```
+
+```{r}
+conf %>% knitr::kable(., "html",caption="Confusion matrix with reduction factor of 5") %>% kable_paper(full_width = F) %>% collapse_rows
+```
+
+
+
+
+```{r}
+Res_Alt <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
+                         mdrs=c(1.25,2,3,5),
+                         Nsim=12000,
+                         synergy=T,reduction=0.9,q=0.95)
+
+ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Reduction Factor of 10")
+Res_Alt$confusion$Truth <- "synergy"
+Res_Null$confusion$Truth <- "No synergy"
+tmp <- rbind(Res_Null$confusion,Res_Alt$confusion)%>%pivot_wider(names_from = Truth,values_from=value)%>%mutate(Decision="Reject H0")
+
+confusion <- rbind(tmp,tmp %>% mutate(`No synergy`=1-`No synergy`,synergy=1-synergy,Decision="Do not reject H0"))
+
+conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr::map(data,function(df){
+  df[2:1,c(3,1,2)]%>%mutate(`No synergy`=paste0(c("True Negative=","False Positive="),formatC(`No synergy`*100,digits = 1,format="f"),"%"),synergy=paste0(c("False Negative=","True Positive="),formatC(synergy*100,digits = 1,format="f"),"%"))
+}))%>%unnest(cols = c(data))
+library(kableExtra)
+
+##conf %>% knitr::kable(., "markdown")
+```
+
+```{r}
+conf %>% knitr::kable(., "html",caption="Confusion matrix with reduction factor of 10") %>% kable_paper(full_width = F) %>% collapse_rows
+```
+
+## Cutoff for MDRs
+
+- What should be the cutoff value for mis-classification? 5% for $H_0$ based simulations? 
+- Note that the variance of MDR based on simulation should be also considered. 
+
+```{r}
+df <- simCVmat(cvs=c(0.6,1,1.4),mean_sim=1,p=c(0.5,0.5),Nsim=5000,M=100)
+df1 <- df%>% pivot_longer(cols = starts_with("Rep"),names_to="Replicate",values_to="MDR")
+ggplot(df1,aes(x=MDR,col=CV)) + geom_density(aes(group=Replicate))+scale_x_log10()+facet_grid(.~CV)
+
+MDRdist <- df1 %>% group_by(CV,Replicate) %>% summarise(mean=mean(MDR),q95=quantile(MDR,0.95))
+
+skimr::skim(MDRdist)
+MDRdist1 <- MDRdist %>% pivot_longer(cols = c(mean,q95),names_to="stats",values_to="value")
+ggplot(MDRdist1,aes(x=CV,y=value))+geom_boxplot()+geom_point()+facet_grid(.~stats)#+scale_y_log10()
+
+```
+
+
+
+```{r eval=F}
+
+df <- simCVmat(cvs=c(0.6,1,1.4),mean_sim=1,p=c(0.5,0.5),Nsim=5000,M=100,synergy=T)
+df1 <- df%>% pivot_longer(cols = starts_with("Rep"),names_to="Replicate",values_to="MDR")
+ggplot(df1,aes(x=MDR,col=CV)) + geom_density(aes(group=Replicate))+scale_x_log10()+facet_grid(.~CV)
+
+MDRdist <- df1 %>% group_by(CV,Replicate) %>% summarise(mean=mean(MDR),q95=quantile(MDR,0.95))
+
+skimr::skim(MDRdist)
+MDRdist1 <- MDRdist %>% pivot_longer(cols = c(mean,q95),names_to="stats",values_to="value")
+ggplot(MDRdist1,aes(x=CV,y=value))+geom_boxplot()+geom_point()+facet_grid(.~stats)#+scale_y_log10()
+
+
+```
+
+
+```{r}
+tmp <- simConfusion_2mixture(mdrs = seq(1,10,by=0.02))
+tmp$confusion$CV <- plyr::mapvalues(tmp$confusion$CV,from=unique(tmp$confusion$CV),to=paste0(as.numeric(unique(tmp$confusion$CV))*100,"%"))
+tmp$confusion$CV<- factor(tmp$confusion$CV,levels=unique(tmp$confusion$CV))
+ggplot(tmp$confusion,aes(x=MDR,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.05,lty=2)+xlab("MDR Cutoff")+ggtitle("Simulation based on H_0: Additive Mixture")
+```
+
+
+```{r}
+factorV <- c(2,3,5,10)
+reductionV <- 1-1/factorV
+mdrs <- seq(1,10,by=0.02)
+
+
+resAll <- lapply(1:length(reductionV),function(i){
+  tmp1 <- simConfusion_2mixture(mdrs = mdrs,synergy = T,reduction = reductionV[i])
+  return(tmp1)
+})
+resAll0 <- list()
+resAll0[[1]] <- tmp
+resAll <- c(resAll0,resAll)
+names(resAll) <- c(1,factorV)  #paste0("reduction=",c(0,reductionV))
+resDF <- plyr::ldply(lapply(resAll,function(x)x$confusion))
+resDF$.id <- factor(resDF$.id,levels=c(1,2,3,5,10))
+resDF$reduction.factor <- resDF$.id
+resDF$CV <-  plyr::mapvalues(resDF$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+resDF$CV <- factor(resDF$CV,levels=unique(resDF$CV))
+p1 <- ggplot(resDF,aes(x=MDR,y=value,col=reduction.factor))+geom_point(pch=".")+geom_line(aes(group=.id))+facet_grid(.~CV)+theme(axis.text.x = element_text(angle = -90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.05,lty=2)+xlab("MDR Cutoff")+geom_hline(yintercept = 0.80,lty=2,col="darkblue")+theme(legend.position = "top")+guides(title="Reduction Factor")+geom_vline(xintercept = c(1.25,2,3,5),lty=3,col="darkblue")+scale_x_continuous(breaks = c(2,3,5,7.5,10))+ylab("")+see::scale_color_metro_d()
+## if(interactive())ggsave("inst/manuscript/MDRcut-off.png")
+
+```
+
+
+```{r fig.cap="Figure 4. MDR thresholds based on simulated LD50s for different CV%."}
+library(patchwork)
+theme_set(theme_bw())
+(p_sim_H0+theme(legend.position = "top"))/p1+ plot_annotation(tag_levels = 'A')
+if(interactive())ggsave("inst/manuscript/figure4.png",width=7,height=7,dpi=300)
+```
+
+Note that this is based on 1 simulation run. These thresholds varies a bit for each simulation. In panel B, the upper dashed horizontal lines represents 80% power line whereas the lower dashed horizontal line represents the  5% type I error line. For the black curve where the deviation factor is 1, meaning that the mixture of the two components have the same mean and cv as each of the single component. In this case, type I error of falsely identifying a non-existing synergist effect should be avoided, for CV = 100%, as shown in the plot, when using MDR > 5 as a cutoff value, there is less than 5% of chance of making type I error.  On the other hand, for the colored curves where the simulation truth assumes a deviation factor greater than 1, an MDR cutoff value should be smaller than a certain value so that there is more than 80% of chance of identifying the known synergistic effect.  For example, for the yellow curve where the deviation factor is 5, for CV=100%, when MDR < 3, we are confident that we less than 20% of change of making type II error. 
 

@@ -2,30 +2,27 @@
 
 This is an R package for reproducing the resutlts of the manuscript Bee Mixtox
 
+## Data
 
-## Getting Started
 
-These instructions will allow you to setup the project or code snippet for your own use.
-
-### Prerequisites
-
-What is needed to use the project or code snippet?
-
-```
-Give examples
-```
+## Reproduce the Results in the Manuscript
 
 ### Installing
 
 
 ```
-Give the example
+install_github("Zhenglei-BCS/beemixtox_public")
 ```
 
-And repeat
+### Data Selections and Curation
+```
+vignettes/articles/Ecotox-Database-Handling-and-Analysis.Rmd
+```
+
+### Tables and Figures in the Manuscript
 
 ```
-until finished
+vignettes/articles/Manuscript-Supplemental-Package.Rmd
 ```
 
 

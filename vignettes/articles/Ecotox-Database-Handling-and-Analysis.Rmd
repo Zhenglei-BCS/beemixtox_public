@@ -1,5 +1,9 @@
 ---
 title: "Ecotox Database Handling and Analysis"
+output:
+  html_document:
+    df_print: paged
+    code_folding: hide
 ---
 
 ```{r, include = FALSE}
@@ -10,5 +14,256 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(beemixtox)
+library(beemixtox1)
+library(tidyverse)
+options(knitr.kable.NA = '')
+```
+
+## Data Pre-processing
+
+### Query from EPA-Ecotox
+
+The following filtering criteria was used to extract the relevant data form the EPA-Ecotox database. In this extraction, the dataset contains 576 CAS numbers. 
+
+- **Chemicals**
+- **Effect Measurements **
+  - Mortality Group
+	    - Mortality
+- **Endpoints **
+  - Concentration Based Endpoints
+	  - LD50
+- **Species **
+  - Name(s) / Number(s)
+	  - honey bee
+  - Kingdom: Animals
+  - Name Search Type: Common Name
+- **Test Conditions **
+  - Test Locations
+	  - Lab
+- **Publication Options **
+
+
+
+```{r eval=FALSE}
+#Define and set paths
+Dir_Data = "~/Projects/beemixtox_public/data-raw/"
+Data.SSD = read.csv(paste0(Dir_Data,"data/Copy of etc4373-sup-0002-supmat.csv"))
+## usethis::use_data(Data.SSD) ## The common-name of the EPA Ecotox DB.
+#Load data (USEPA internal not for publication)
+
+#Load data
+
+Data = read.csv(paste0(Dir_Data,"data/TerrestrialReport.csv"))
+## usethis::use_data("Data")
+length(unique(Data$CAS.Number))
+#578 CAS
+```
+
+### Selection and Curation of the Raw Dataset
+
+- Selection
+    - Life stage: Adult
+    - Duration days <=2, restrict to 24 h and 48 h studies.
+    - Remove censored LDx. 
+    - Use CASes with no less than 3 observations. 29 Chemicals
+    - Retain only data with units in "AI mg/org","AI ng/org","AI ug/org","mg/bee","mg/org","ng/org","ug/bee","ug/org"
+    - Exposure type: "Oral via capsule","Spray"
+    - 
+
+    
+
+```{r eval=FALSE}
+#Subset dataset for relevant parameters
+Data.1 = Data
+Data.1 = Data.1[Data.1$Organism.Lifestage%in%c("Adult"),]
+
+#Subset for relevant exposure times
+Data.1$Observed.Duration..Days.[Data.1$Observed.Duration..Days.=="NR"] = NA
+Data.1$Observed.Duration..Days. = as.numeric(as.character(Data.1$Observed.Duration..Days.))
+
+# Restrict to 24 h & 48 h end-points
+Data.1 = Data.1[Data.1$Observed.Duration..Days.>=1 & Data.1$Observed.Duration..Days.<=2,]
+
+#Restrict to definitive LDx
+Data.1 = Data.1[Data.1$Observed.Response.Mean.Op%in%c(""),]
+
+Data.1 = droplevels(Data.1)
+
+length(unique(Data.1$CAS.Number))
+
+# How many end-points per CAS number?
+NPerCAS = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, length)
+NPerCAS = NPerCAS[order(NPerCAS$Observed.Response.Mean, decreasing = T),]
+
+# Restrict to more than 5 observations
+NPerCAS = NPerCAS[NPerCAS$Observed.Response.Mean>=3,]
+#29 compunts
+
+# Restrict Data.1 for these 29 compounds
+Data.1 = Data.1[Data.1$CAS.Number%in%c(NPerCAS$CAS.Number),]; Data.1 = droplevels(Data.1)
+
+# Homogenize units
+table(Data.1$Observed.Response.Units)
+
+## UNITS
+Data.1$Observed.Response.Mean = as.numeric(as.character(Data.1$Observed.Response.Mean))
+# Retain only useful units
+Data.1 = Data.1[Data.1$Observed.Response.Units%in%c("AI mg/org","AI ng/org","AI ug/org","mg/bee","mg/org","ng/org","ug/bee","ug/org"),]; Data.1 = droplevels(Data.1)
+
+#Transform mg to microgram
+Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI mg/org","mg/bee","mg/org")] = Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI mg/org","mg/bee","mg/org")]*1000 #to ug/bee
+Data.1$Observed.Response.Units[Data.1$Observed.Response.Units%in%c("AI mg/org","mg/bee","mg/org")] = "ug/bee"
+
+#ng to microgram
+Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI ng/org","ng/org")] = Data.1$Observed.Response.Mean[Data.1$Observed.Response.Units%in%c("AI ng/org","ng/org")]/1000 #to ug/bee
+Data.1$Observed.Response.Units[Data.1$Observed.Response.Units%in%c("AI ng/org","ng/org")] = "ug/bee"
+
+# Homogenize ng/bee
+Data.1$Observed.Response.Units[Data.1$Observed.Response.Units%in%c("AI ug/org","ug/bee","ug/org")] = "ug/bee"
+
+table(Data.1$Observed.Response.Units)
+Data.1 = droplevels(Data.1)
+
+# Exposure media
+table(Data.1$Exposure.Type)
+Data.1 = Data.1[!Data.1$Exposure.Type%in%c("Oral via capsule","Spray"),]; Data.1 = droplevels(Data.1)
+```
+
+- Data Curation
+    - Restrict the database for chemicals with repeated entries (i.e., more than 3 or 5 LD50 for the same chemical) ==> 16 chemicals
+    - Units transformed to microgram based. (mg, ng ==> ug) Note this step is done in the previous code chunk. 
+
+
+
+```{r eval=FALSE}
+# Approximate variability
+Bee.var.N = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, length)
+Bee.var.Ave = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, mean)
+Bee.var.sd = aggregate(Observed.Response.Mean ~ CAS.Number, data =Data.1, sd)
+
+# Merge
+Bee.var = merge(Bee.var.N,Bee.var.Ave, by="CAS.Number")
+Bee.var = merge(Bee.var,Bee.var.sd, by="CAS.Number")
+names(Bee.var) [c(2:4)] = c("N", "Mean", "sd")
+
+# Restrict to at least 5 cases per CAS
+Bee.var = Bee.var[Bee.var$N>3,] # 16 chemicals
+
+Bee.var$CV.Perc = 100*(Bee.var$Mean/Bee.var$sd)
+Bee.var = merge(Bee.var, Data.SSD[,c(1,3)], by.x = "CAS.Number", by.y = "CAS.", all.x = T)
+Bee.var = Bee.var[order(Bee.var$N, decreasing = T),]
+
+# Summary of CV%
+summary(Bee.var)
+
+# Check for independency of N and Mean
+plot(Bee.var$N,Bee.var$CV.Perc)
+plot(log10(Bee.var$N),Bee.var$CV.Perc)
+plot(log10(Bee.var$Mean), Bee.var$CV.Perc)
+
+# Which chemicals do we have represented?
+```
+
+
+```{r eval=FALSE}
+#restrict Data.1 to the selected CAS.N
+Data.2 = Data.1
+Data.2 = Data.2[Data.2$CAS.Number%in%Bee.var$CAS.Number,]; Data.2 = droplevels(Data.2)
+Data.2$CAS.Number = as.character(Data.2$CAS.Number)
+```
+
+- Check the consistency of the data. 
+```{r}
+# Check consistency again
+table(Data.2$Chemical.Grade) %>% knitr::kable(.,caption ="Chemical Grade")%>% kableExtra::kable_classic_2()
+# Chemical grade is not reported in most cases
+table(Data.2$Organism.Lifestage)%>% knitr::kable(.,caption ="Organism Life Stage")%>% kableExtra::kable_classic_2()
+table(Data.2$Exposure.Type)%>% knitr::kable(.,caption ="Exposure Type")%>% kableExtra::kable_classic_2()
+table(Data.2$Number.of.Doses)%>% knitr::kable(.,caption ="Number of Doses")%>% kableExtra::kable_classic_2()
+table(Data.2$Observed.Duration..Days.)%>% knitr::kable(.,caption ="Duration in Days")%>% kableExtra::kable_classic_2()
+```
+
+
+```{r eval=FALSE}
+aov.1 = aov(Observed.Response.Mean ~ CAS.Number + Conc.1.Type..Author. + Exposure.Type + Observed.Duration..Days., data = Data.2)
+summary(aov.1)
+
+
+# Save reference list only
+Data.2.Ref = unique(Data.2[,c(70,71,72,73,74)])
+## usethis::use_data(Data.2)
+## write.csv(Data.2.Ref, file = "Data.2.Ref_ECOTOX_BeeLD50_Curated.csv", row.names = F)
+```
+
+ 
+
+```{r eval=FALSE,include=FALSE}
+## Analysis of Data.B (USEPA internal, not for external use)
+Data.B.1 = Data.B[Data.B$GUIDELINE=="141-1",] #retrict to relevant guideline - relevant Guideline: 141-1
+Data.B.1 = droplevels(Data.B.1)
+table(Data.B.1$TAXA)
+table(Data.B.1$TGL)
+Data.B.1$TOXICITY = as.numeric(as.character(Data.B.1$TOXICITY))
+Data.B.1 = Data.B.1[complete.cases(Data.B.1$TOXICITY),]
+
+#Only definitive values
+Data.B.1 = Data.B.1[Data.B.1$TGL=="",]
+B.Bee.var.N = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, length)
+B.Bee.var.Ave = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, mean)
+B.Bee.var.sd = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, sd)
+
+# Merge
+B.Bee.var = merge(B.Bee.var.N,B.Bee.var.Ave, by="CAS_NO")
+B.Bee.var = merge(B.Bee.var,B.Bee.var.sd, by="CAS_NO")
+names(B.Bee.var) [c(2:4)] = c("N", "Mean", "sd")
+
+# Restrict to at least 5 cases per CAS
+B.Bee.var = B.Bee.var[B.Bee.var$N>3,] # 16 chemicals
+
+B.Bee.var$CV.Perc = 100*(B.Bee.var$Mean/B.Bee.var$sd)
+
+# Summary of CV%
+summary(B.Bee.var$CV.Perc)
+plot(B.Bee.var$N,B.Bee.var$CV.Perc)
+plot(log10(B.Bee.var$Mean), B.Bee.var$CV.Perc)
+
+#
+
+```
+
+
+## Correlations among variables
+
+In this section we we use EDA and ANOVA to check possible correlations among the variables.   
+
+```{r fig.width=8}
+Data.2 <- Data.2 %>% mutate(logTox = log(Observed.Response.Mean))
+mod = lm(log(Observed.Response.Mean) ~ CAS.Number + Conc.1.Type..Author. + Exposure.Type + Observed.Duration..Days., data = Data.2)
+summary(mod)
+## car::Anova(mod) %>% pander::pander(.)
+```
+
+```{r}
+car::Anova(mod) %>% knitr::kable(.,digits = 3) %>% kableExtra::kable_classic()
+```
+
+
+As shown in the ANOVA Table, none of the covariate variables, except for CAS,  has a significant effect on the observed response mean. 
+
+From the EDA, we see the formulation has in general has higher observed response mean values as hown in Figure 1 and Figure 3. However, if we break it down to each CAS, the relationship does not hold for most of the CAS. Figure 4 confirmed our finding in the simple ANOVA analysis, the variance is mainly explained by the CAS difference, not by Conc types.  
+
+
+```{r fig.width=8,fig.align="center",fig.cap=c("Figure 1: Paired Plot of the variable in the dataset", "Figure 2: Relationship between log of the Tox value and the duration of the study","Figure 3: logTox and CAS, concentration type, exposure type relationship")}
+library(GGally)
+ggpairs(Data.2[,c("logTox","Conc.1.Type..Author.","Exposure.Type","Observed.Duration..Days.")])
+ggplot(data=Data.2,aes(x=Observed.Duration..Days.,y=log(Observed.Response.Mean)))+geom_point()+geom_boxplot(aes(group=Observed.Duration..Days.))
+
+ldat <- Data.2 %>% dplyr::select(c(CAS.Number , Conc.1.Type..Author., Exposure.Type,logTox)) %>% pivot_longer(!logTox,names_to="variables",values_to="value") 
+ggplot(ldat,aes(x=value,y=logTox))+geom_boxplot()+geom_point()+facet_wrap(~variables,scales = "free")+ theme(axis.text.x = element_text(angle = 90))
+```
+
+
+
+```{r fig.width=8,fig.align="center",fig.cap="Figure 4: CAS and Conc Type interaction"}
+ggplot(Data.2,aes(x=Conc.1.Type..Author.,y=logTox))+geom_boxplot()+geom_point()+facet_wrap(~CAS.Number,scales = "free_y")+ theme(axis.text.x = element_text(angle = 90))
 ```

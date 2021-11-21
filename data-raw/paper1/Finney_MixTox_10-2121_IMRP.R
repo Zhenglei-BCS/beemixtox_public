@@ -6,8 +6,8 @@
 rm(list=ls())
 
 #Define and set paths
-Dir_Data = "~/Projects/beemixtox/data-raw/paper1/"
-Dir_Results = "~/Projects/beemixtox/data-raw/paper1/"
+Dir_Data = "~/Projects/beemixtox_public/data-raw/paper1/"
+Dir_Results = "~/Projects/beemixtox_public/data-raw/paper1/"
 
 
 

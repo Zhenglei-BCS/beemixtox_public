@@ -17,7 +17,10 @@ library(knitr)
 library(kableExtra)
 ```
 
+
 # Data Pre-processing
+
+Please note that if you install the package, the data pre-processing is not needed. The curated dataset is included in the package. This section is to explicitly show the script used in the data selection and data curation step. 
 
 ## Query from EPA-Ecotox
 
@@ -579,20 +582,6 @@ RootSpline3 <- function (f, y0 = 0, verbose = TRUE) {
 ```
 
 
-```{r eval=F,echo=F}
-library(cdata)
-controlTable <- wrapr::qchar_frame(
-  "Num_Mixture", "Length"     , "Width"     |
-    "1"    , Petal.Length , Petal.Width |
-    "2"    , Sepal.Length , Sepal.Width )
-
-layout <- rowrecs_to_blocks_spec(
-  record_example,
-  controlTableKeys = c("Num_mixure", "q95"),
-  recordKeys = c("iris_id", "Species"))
-
-print(layout)
-```
 
 # Methods
 
