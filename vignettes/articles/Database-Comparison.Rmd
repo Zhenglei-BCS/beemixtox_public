@@ -1,0 +1,37 @@
+---
+title: "Database Comparison"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(beemixtox1)
+```
+
+To make sure the data used in the manuscript is comparable to data from other databases, ...
+
+
+```{r}
+unique(toxdata$DOSETYPE)
+toxdata %>% filter(DOSETYPE %in% c("LC50", "EC50", "LD50", "LOEL", "LOEC", "EC25", "L100", "RT25", 
+"LR50", "BCF", "IC50", "IC25", "LC59", "LD35", "RT50", "LD40", 
+"ED50", "EC40", "NOEL"))%>%filter(TGL %in% c("",  ">", "<", "5")) %>% mutate(TOXICITY=) %>% filter(TOXLEVEL %in% c("PPM", "UG", "MGK", "PPB", "UGB", "LBA", "LBG", "LB/G", "N.R.", 
+"OZA", "UGC", "Oz/A", "KgH", "UGG", "N.A.", "kg/H", "oz/A", "gm/H", 
+"PPT", "gmH", "Hrs", "L/H", "Kg/h", "Kg/H", "ml/L", "L/Ha", "SML", 
+"L/ha", "UGK", "L/hl", "kg/h", "ug/g", "MGM3", "ml/H", "MG", 
+"GmH", "UGH", "MGM", "ugK", "MGG", "MKG"))
+
+
+```
+
+
+```{r}
+toxdata$TGL
+toxdata$TOXICITY
+```
+
