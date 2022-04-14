@@ -1,0 +1,48 @@
+"combo.name","combo.S.name","Label.class.name","combo.Type.name","MoA.class.name","N.Observations"
+"Spirotetramat + Tetraniliprole","SPT + TTP","ACCase inhibitor (I) + ryanodine receptor modulator","INS + INS","23 + 28",3
+"Prochloraz + Tebuconazole","PCZ + TBZ","DMI + DMI","FUN + FUN","G1 + G1",1
+"Prothioconazole + Tebuconazole","PTZ + TBZ","DMI + DMI","FUN + FUN","G1 + G1",6
+"Tebuconazole + Triadimenol","TBZ + TDL","DMI + DMI","FUN + FUN","G1 + G1",2
+"Fipronil + Tetraniliprole","FPR + TTP","GABA-A receptor + ryanodine receptor modulator","INS + INS","2B + 28",4
+"Flupyradifurone + Spiromesifen","FPF + SMF","nAChR receptor agonist + ACCase inhibitor (I)","INS + INS","4D + 23",1
+"Imidacloprid + Spirotetramat","IMD + SPT","nAChR receptor agonist + ACCase inhibitor (I)","INS + INS","4A + 23",4
+"Spirotetramat + Thiacloprid","SPT + TCP","nAChR receptor agonist + ACCase inhibitor (I)","INS + INS","4A + 23",6
+"Clothianidin + Methiocarb","CTD + MTC","nAChR receptor agonist + AChE","INS + INS","4A + 1A",8
+"Imidacloprid + Methamidophos","IMD + MDP","nAChR receptor agonist + AChE","INS + INS","4A + 1B",4
+"Imidacloprid + Thiodicarb","IMD + TDC","nAChR receptor agonist + AChE","INS + INS","4A + 1A",7
+"Clothianidin + Prothioconazole","CTD + PTZ","nAChR receptor agonist + DMI","INS + FUN","4A + G1",4
+"Imidacloprid + Prothioconazole","IMD + PTZ","nAChR receptor agonist + DMI","INS + FUN","4A + G1",3
+"Imidacloprid + Tebuconazole","IMD + TBZ","nAChR receptor agonist + DMI","INS + FUN","4A + G1",1
+"Prothioconazole + Tebuconazole + Thiacloprid","PTZ + TBZ + TCP","nAChR receptor agonist + DMI","INS + FUN","4A + G1",4
+"Prothioconazole + Thiacloprid","PTZ + TCP","nAChR receptor agonist + DMI","INS + FUN","4A + G1",4
+"Tebuconazole + Thiacloprid","TBZ + TCP","nAChR receptor agonist + DMI","INS + FUN","4A + G1",4
+"Ethiprole + Imidacloprid","EPR + IMD","nAChR receptor agonist + GABA-A receptor","INS + INS","4A + 2B",6
+"Fipronil + Imidacloprid","FPR + IMD","nAChR receptor agonist + GABA-A receptor","INS + INS","4A + 2B",3
+"Clothianidin + Imidacloprid","CTD + IMD","nAChR receptor agonist + nAChR receptor agonist","INS + INS","4A + 4A",9
+"Tetraniliprole + Thiacloprid","TTP + TCP","nAChR receptor agonist + ryanodine receptor modulator","INS + INS","4A + 28",2
+"Fluoxastrobin + Prothioconazole","FXA + PTZ","respiration (CIII, o-site) + DMI","FUN + FUN","C3 + G1",4
+"Isoflucypram + Prothioconazole","ISY + PTZ","respiration: SDH + DMI","FUN + FUN","C2 + G1",8
+"Isoflucypram + Prothioconazole + Tebuconazole","ISY + PTZ + TBZ","respiration: SDH + DMI","FUN + FUN","C2 + G1",2
+"Fenpropidin + Tebuconazole","FPD + TBZ","SBI: sterol biosynthesis + DMI","FUN + FUN","G2 + G1",1
+"Prothioconazole + Spiroxamine","PTZ + SPX","SBI: sterol biosynthesis + DMI","FUN + FUN","G2 + G1",4
+"Prothioconazole + Spiroxamine + Tebuconazole","PTZ + SPX + TBZ","SBI: sterol biosynthesis + DMI","FUN + FUN","G2 + G1",2
+"Spiroxamine + Tebuconazole","SPX + TBZ","SBI: sterol biosynthesis + DMI","FUN + FUN","G2 + G1",3
+"Bifenthrin + Prothioconazole","BFN + PTZ","vsSCh + DMI","INS + FUN","3A + G1",4
+"Deltamethrin + Prothioconazole","DLT + PTZ","vsSCh + DMI","INS + FUN","3A + G1",4
+"Deltamethrin + Tebuconazole","DLT + TBZ","vsSCh + DMI","INS + FUN","3A + G1",4
+"Etofenprox + Prothioconazole","ETF + PTZ","vsSCh + DMI","INS + FUN","3A + G1",4
+"Lambda-cyhalothrin + Prothioconazole","LCY + PTZ","vsSCh + DMI","INS + FUN","3A + G1",8
+"Lambda-cyhalothrin + Tebuconazole","LCY + TBZ","vsSCh + DMI","INS + FUN","3A + G1",8
+"Prothioconazole + Alpha-cypermethrin","PTZ + ACY","vsSCh + DMI","INS + FUN","3A + G1",8
+"Tebuconazole + Alpha-cypermethrin","TBZ + ACY","vsSCh + DMI","INS + FUN","3A + G1",8
+"Deltamethrin + Endosulfan","DLT + ENS","vsSCh + GABA-A receptor","INS + INS","3A + 2A",1
+"Beta-cyfluthrin + Clothianidin","CYB + CTD","vsSCh + nAChR receptor agonist","INS + INS","3A + 4A",11
+"Beta-cyfluthrin + Clothianidin + Imidacloprid","CYB + CTD + IMD","vsSCh + nAChR receptor agonist","INS + INS","3A + 4A",3
+"Beta-cyfluthrin + Imidacloprid","CYB + IMD","vsSCh + nAChR receptor agonist","INS + INS","3A + 4A",7
+"Deltamethrin + Flupyradifurone","DLT + FPF","vsSCh + nAChR receptor agonist","INS + INS","3A + 4D",4
+"Deltamethrin + Imidacloprid","DLT + IMD","vsSCh + nAChR receptor agonist","INS + INS","3A + 4A",3
+"Deltamethrin + Thiacloprid","DLT + TCP","vsSCh + nAChR receptor agonist","INS + INS","3A + 4A",11
+"Flupyradifurone + Transfluthrin","FPF + BFT","vsSCh + nAChR receptor agonist","INS + INS","3A + 4D",1
+"Deltamethrin + Prothioconazole + Tebuconazole + Thiacloprid","DLT + PTZ + TBZ + TCP","vsSCh + nAChR receptor agonist + DMI","INS + FUN","3A + 4A + G1",4
+"Deltamethrin + Prothioconazole + Thiacloprid","DLT + PTZ + TCP","vsSCh + nAChR receptor agonist + DMI","INS + FUN","3A + 4A + G1",4
+"Deltamethrin + Tebuconazole + Thiacloprid","DLT + TBZ + TCP","vsSCh + nAChR receptor agonist + DMI","INS + FUN","3A + 4A + G1",4

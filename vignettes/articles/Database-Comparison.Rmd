@@ -1,5 +1,5 @@
 ---
-title: "Database Comparison"
+title: "OPP Database Comparison"
 ---
 
 ```{r, include = FALSE}
@@ -13,7 +13,9 @@ knitr::opts_chunk$set(
 library(beemixtox1)
 ```
 
-To make sure the data used in the manuscript is comparable to data from other databases, ...
+The purpose of this analysis is to make sure the data used in the manuscript is comparable to data from other databases. (Norman EMPODAT database, SUSDAT, EHype v3, SSD data from Posthuma)
+
+
 
 
 ```{r}

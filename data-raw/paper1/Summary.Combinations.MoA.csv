@@ -1,0 +1,48 @@
+"combo.name","combo.S.name","MoA.class.name","combo.Type.name","N.Observations"
+"Isoflucypram + Prothioconazole","ISY + PTZ","C2 + G1","FUN + FUN",8
+"Isoflucypram + Prothioconazole + Tebuconazole","ISY + PTZ + TBZ","C2 + G1","FUN + FUN",2
+"Fluoxastrobin + Prothioconazole","FXA + PTZ","C3 + G1","FUN + FUN",4
+"Prochloraz + Tebuconazole","PCZ + TBZ","G1 + G1","FUN + FUN",1
+"Prothioconazole + Tebuconazole","PTZ + TBZ","G1 + G1","FUN + FUN",6
+"Tebuconazole + Triadimenol","TBZ + TDL","G1 + G1","FUN + FUN",2
+"Fenpropidin + Tebuconazole","FPD + TBZ","G2 + G1","FUN + FUN",1
+"Prothioconazole + Spiroxamine","PTZ + SPX","G2 + G1","FUN + FUN",4
+"Prothioconazole + Spiroxamine + Tebuconazole","PTZ + SPX + TBZ","G2 + G1","FUN + FUN",2
+"Spiroxamine + Tebuconazole","SPX + TBZ","G2 + G1","FUN + FUN",3
+"Deltamethrin + Prothioconazole + Tebuconazole + Thiacloprid","DLT + PTZ + TBZ + TCP","3A + 4A + G1","INS + FUN",4
+"Deltamethrin + Prothioconazole + Thiacloprid","DLT + PTZ + TCP","3A + 4A + G1","INS + FUN",4
+"Deltamethrin + Tebuconazole + Thiacloprid","DLT + TBZ + TCP","3A + 4A + G1","INS + FUN",4
+"Bifenthrin + Prothioconazole","BFN + PTZ","3A + G1","INS + FUN",4
+"Deltamethrin + Prothioconazole","DLT + PTZ","3A + G1","INS + FUN",4
+"Deltamethrin + Tebuconazole","DLT + TBZ","3A + G1","INS + FUN",4
+"Etofenprox + Prothioconazole","ETF + PTZ","3A + G1","INS + FUN",4
+"Lambda-cyhalothrin + Prothioconazole","LCY + PTZ","3A + G1","INS + FUN",8
+"Lambda-cyhalothrin + Tebuconazole","LCY + TBZ","3A + G1","INS + FUN",8
+"Prothioconazole + Alpha-cypermethrin","PTZ + ACY","3A + G1","INS + FUN",8
+"Tebuconazole + Alpha-cypermethrin","TBZ + ACY","3A + G1","INS + FUN",8
+"Clothianidin + Prothioconazole","CTD + PTZ","4A + G1","INS + FUN",4
+"Imidacloprid + Prothioconazole","IMD + PTZ","4A + G1","INS + FUN",3
+"Imidacloprid + Tebuconazole","IMD + TBZ","4A + G1","INS + FUN",1
+"Prothioconazole + Tebuconazole + Thiacloprid","PTZ + TBZ + TCP","4A + G1","INS + FUN",4
+"Prothioconazole + Thiacloprid","PTZ + TCP","4A + G1","INS + FUN",4
+"Tebuconazole + Thiacloprid","TBZ + TCP","4A + G1","INS + FUN",4
+"Spirotetramat + Tetraniliprole","SPT + TTP","23 + 28","INS + INS",3
+"Fipronil + Tetraniliprole","FPR + TTP","2B + 28","INS + INS",4
+"Deltamethrin + Endosulfan","DLT + ENS","3A + 2A","INS + INS",1
+"Beta-cyfluthrin + Clothianidin","CYB + CTD","3A + 4A","INS + INS",11
+"Beta-cyfluthrin + Clothianidin + Imidacloprid","CYB + CTD + IMD","3A + 4A","INS + INS",3
+"Beta-cyfluthrin + Imidacloprid","CYB + IMD","3A + 4A","INS + INS",7
+"Deltamethrin + Imidacloprid","DLT + IMD","3A + 4A","INS + INS",3
+"Deltamethrin + Thiacloprid","DLT + TCP","3A + 4A","INS + INS",11
+"Deltamethrin + Flupyradifurone","DLT + FPF","3A + 4D","INS + INS",4
+"Flupyradifurone + Transfluthrin","FPF + BFT","3A + 4D","INS + INS",1
+"Clothianidin + Methiocarb","CTD + MTC","4A + 1A","INS + INS",8
+"Imidacloprid + Thiodicarb","IMD + TDC","4A + 1A","INS + INS",7
+"Imidacloprid + Methamidophos","IMD + MDP","4A + 1B","INS + INS",4
+"Imidacloprid + Spirotetramat","IMD + SPT","4A + 23","INS + INS",4
+"Spirotetramat + Thiacloprid","SPT + TCP","4A + 23","INS + INS",6
+"Tetraniliprole + Thiacloprid","TTP + TCP","4A + 28","INS + INS",2
+"Ethiprole + Imidacloprid","EPR + IMD","4A + 2B","INS + INS",6
+"Fipronil + Imidacloprid","FPR + IMD","4A + 2B","INS + INS",3
+"Clothianidin + Imidacloprid","CTD + IMD","4A + 4A","INS + INS",9
+"Flupyradifurone + Spiromesifen","FPF + SMF","4D + 23","INS + INS",1
