@@ -275,12 +275,12 @@ conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr
   df[2:1,c(3,1,2)]%>%mutate(`No synergy`=paste0(c("True Negative=","False Positive="),formatC(`No synergy`*100,digits = 1,format="f"),"%"),synergy=paste0(c("False Negative=","True Positive="),formatC(synergy*100,digits = 1,format="f"),"%"))
 }))%>%unnest(cols = c(data))
 library(kableExtra)
-
+conf2 <- conf %>% rename(`Synery Factor 2`=synergy)
 ## conf %>% knitr::kable(., "markdown")
 ```
 
 
-```{r}
+```{r eval=F,include=F}
 conf %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"%"))%>%mutate(Mixture=plyr::mapvalues(Mixture,from=c(2,3),to=c("Binary","Tertiary"))) %>% knitr::kable(., "html",caption="<center><strong>Table S4: The Confusion Matrix using different MDR thresholds when reduction factor is 2</strong></center>", escape = FALSE) %>%kable_paper(c("striped"),full_width = T) %>% collapse_rows
 ```
 
@@ -305,11 +305,11 @@ conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr
   df[2:1,c(3,1,2)]%>%mutate(`No synergy`=paste0(c("True Negative=","False Positive="),formatC(`No synergy`*100,digits = 1,format="f"),"%"),synergy=paste0(c("False Negative=","True Positive="),formatC(synergy*100,digits = 1,format="f"),"%"))
 }))%>%unnest(cols = c(data))
 library(kableExtra)
-
+conf5 <- conf %>% rename(`Synery Factor 5`=synergy)
 ## conf %>% knitr::kable(., "markdown")
 ```
 
-```{r}
+```{r eval=F,include=F}
 #conf %>% knitr::kable(., "html",caption="<center><strong>Table S5: Confusion matrix with reduction factor of 5</strong></center>", escape = FALSE) %>%kable_paper(full_width = T) %>% collapse_rows
 
 conf %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"%"))%>%mutate(Mixture=plyr::mapvalues(Mixture,from=c(2,3),to=c("Binary","Tertiary"))) %>% knitr::kable(., "html",caption="<center><strong>Table S5: The Confusion Matrix using different MDR thresholds when reduction factor is 5</strong></center>", escape = FALSE) %>%kable_paper(c("striped"),full_width = T) %>% collapse_rows
@@ -337,26 +337,34 @@ conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr
 library(kableExtra)
 
 ##conf %>% knitr::kable(., "markdown")
+conf10 <- conf %>% rename(`Synery Factor 10`=synergy)
 ```
 
-```{r}
+```{r eval=F,include=F}
 #conf %>% knitr::kable(., "html",caption="<center><strong>Table S5: Confusion matrix with reduction factor of 10</strong></center>", escape = FALSE) %>%kable_paper(full_width = T) %>% collapse_rows
 
 conf %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"%"))%>%mutate(Mixture=plyr::mapvalues(Mixture,from=c(2,3),to=c("Binary","Tertiary"))) %>% knitr::kable(., "html",caption="<center><strong>Table S6: The Confusion Matrix using different MDR thresholds when reduction factor is 10</strong></center>", escape = FALSE) %>%kable_paper(c("striped"),full_width = T) %>% collapse_rows(columns = c(1,2,3))
 ```
 
-```{r fig.cap="Combined plots: edit later",fig.align="center",fig.width=12}
+```{r}
+confall <- left_join(conf2,conf5)
+confall <- left_join(confall,conf10)
+confall %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"%"))%>%mutate(Mixture=plyr::mapvalues(Mixture,from=c(2,3),to=c("Binary","Tertiary"))) %>% knitr::kable(., "html",caption="<center><strong>Table S6: The Confusion Matrix using different MDR thresholds when reduction factor is 2, 5, and 10 </strong></center>", escape = FALSE) %>%kable_paper(c("striped"),full_width = T) %>% collapse_rows(columns = c(1,2,3))
+```
+
+
+```{r fig.cap="Combined plots: edit later",fig.align="center",fig.width=12,fig.height=7}
 library(patchwork)
 sim_H0+sim_H2+sim_H5+sim_H10+plot_annotation(tag_levels = 'A')+ plot_layout(guides = "collect")
 ```
 
 
-## Cutoff for MDRs
+## Confidence bands for MDR threholds
 
 
-The MDR thresholds in Table ? based on the non-synergy simulation were derived based on 1 replicates of the simulation procedure. The simulation could be repeated 100 times and the summary stats for the MDR threshold based on the mean or on the 95th %tile could be estimated. 
+The MDR thresholds in Table x is based on the non-synergy simulation were derived based on 1 replicates of the simulation procedure. The simulation could be repeated 100 times and the summary stats for the MDR threshold based on the mean or on the 95th %tile could be estimated, as shown in Table S6. 
 
-```{r}
+```{r fig.cap="Figure S5: Distrubtions of MDRs of 100 repeated simulations."}
 df <- simCVmat(cvs=c(0.6,1,1.4),mean_sim=1,p=c(0.5,0.5),Nsim=5000,M=100)
 df1 <- df%>% pivot_longer(cols = starts_with("Rep"),names_to="Replicate",values_to="MDR")
 ggplot(df1,aes(x=MDR,col=CV)) + geom_density(aes(group=Replicate))+scale_x_log10()+facet_grid(.~CV)
