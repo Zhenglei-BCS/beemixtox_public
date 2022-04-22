@@ -68,7 +68,7 @@ length(unique(Data$CAS.Number))
     - Use CASes with no less than 3 observations. 29 Chemicals
     - Retain only data with units in "AI mg/org","AI ng/org","AI ug/org","mg/bee","mg/org","ng/org","ug/bee","ug/org"
     - Exposure type: "Oral via capsule","Spray"
-    - 
+ 
 
     
 

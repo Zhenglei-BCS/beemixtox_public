@@ -2,7 +2,8 @@
 
 #cleaning the environemt
 rm(list=ls())
-
+casinfo <- read.csv("~/Projects/beemixtox_public/data-raw/CCD-Batch-Search_2022-04-21_01_35_56.csv")
+usethis::use_data(casinfo,overwrite = T)
 #Define and set paths
 Dir_Data = "~/Projects/beemixtox_public/data-raw/paper1/"
 Dir_Results = "~/Projects/beemixtox_public/data-raw/paper1/"
@@ -665,7 +666,7 @@ usethis::use_data(BCSdata,overwrite = TRUE)
 ########---------- OPP -------------- #################
 
 
-usethis::use_directory('/home/zhenglei_gao/Projects/beemixtox_public')
+setwd("~/Projects/beemixtox_public/")
 toxdata <- read.csv("data-raw/OPP/Toxdata.csv")
 
 usethis::use_data(toxdata, overwrite = TRUE)

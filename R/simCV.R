@@ -88,14 +88,15 @@ simCVmat <- function(cvs,mean_sim=1,p=c(0.5,0.5),Nsim=1000,M=100,synergy=F,reduc
 simConfusion <- function(cvs=c(0.3,0.6,1,1.4,3),
                          mdrs=c(1.25,2,3,5),
                          Nsim=12000,
-                         synergy=F,reduction=0.5,q=0.95){
+                         synergy=F,reduction=0.5,q=0.95,noSingle=T){
 
-  res1 <- simCVn(cvs=cvs,mean_sim=1,p=1,Nsim=Nsim,synergy = synergy,reduction=reduction)
+  if(!noSingle){
+    res1 <- simCVn(cvs=cvs,mean_sim=1,p=1,Nsim=Nsim,synergy = synergy,reduction=reduction)
 
-  c1 <-res1%>%group_by(CV)%>% nest() %>% mutate(confusion=map(data,function(df) sapply(mdrs,function(x) sum(df>x)/Nsim)))%>% mutate(Mixture=1) %>% dplyr::select(-data) %>% unnest(cols=c(confusion)) %>% ungroup %>% mutate(cutoff=rep(mdrs,length(cvs))) %>% pivot_wider(names_from = cutoff,names_prefix="MDR>",values_from=confusion)
+    c1 <-res1%>%group_by(CV)%>% nest() %>% mutate(confusion=map(data,function(df) sapply(mdrs,function(x) sum(df>x)/Nsim)))%>% mutate(Mixture=1) %>% dplyr::select(-data) %>% unnest(cols=c(confusion)) %>% ungroup %>% mutate(cutoff=rep(mdrs,length(cvs))) %>% pivot_wider(names_from = cutoff,names_prefix="MDR>",values_from=confusion)
 
-  r1 <- res1%>%group_by(CV)%>% summarise(mean=mean(MDR),Q=quantile(MDR,q)) %>% mutate(Mixture=1)
-
+    r1 <- res1%>%group_by(CV)%>% summarise(mean=mean(MDR),Q=quantile(MDR,q)) %>% mutate(Mixture=1)
+  }
 
   res2 <- simCVn(cvs=cvs,mean_sim=1,p=c(0.5,0.5),Nsim=Nsim,synergy = synergy,reduction=reduction)
 
@@ -109,10 +110,10 @@ simConfusion <- function(cvs=c(0.3,0.6,1,1.4,3),
   c3 <-res3%>%group_by(CV)%>% nest() %>% mutate(confusion=map(data,function(df) sapply(mdrs,function(x) sum(df>x)/Nsim)))%>% mutate(Mixture=3) %>% dplyr::select(-data) %>% unnest(cols=c(confusion)) %>% ungroup %>% mutate(cutoff=rep(mdrs,length(cvs))) %>% pivot_wider(names_from = cutoff,names_prefix="MDR>",values_from=confusion)
 
   r3 <- res3%>%group_by(CV)%>% summarise(mean=mean(MDR),Q=quantile(MDR,q))%>% mutate(Mixture=3)
-  confusion <- rbind(c1,c2,c3)
-  confusion <- confusion %>% pivot_longer(cols = starts_with("MDR"))
+  if(noSingle) confusion <- rbind(c2,c3) else confusion <- rbind(c1,c2,c3)
+  confusion <- confusion %>% pivot_longer(cols = starts_with("MDR")) %>% mutate(name=factor(name,levels=unique(name)))
   #ggplot(confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.05,lty=2)+xlab("MDR Cutoff")
-  res <- rbind(r1,r2,r3)
+  if(noSingle) res <- rbind(r2,r3) else res <- rbind(r1,r2,r3)
   return(list(confusion=confusion,res=res))
 
 }

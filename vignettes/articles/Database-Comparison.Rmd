@@ -11,29 +11,80 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(beemixtox1)
+library(tidyverse)
 ```
 
 The purpose of this analysis is to make sure the data used in the manuscript is comparable to data from other databases. (Norman EMPODAT database, SUSDAT, EHype v3, SSD data from Posthuma)
 
 
+- Data selection and curation: 
+  - Unit with UGB UGB = microgram/bee (We assume generally all data is reported as ug ai/bee unless TOXDATA include reference to “form” or “product”)
+  - Remove all entries reported as ppb or ppm (these are not typical study designs)
+  - Limit to chemicals with at least 4 LD50 reported 
+  - Exclude the following entries in the TOXDATA:
+      - 0.18%
+      - Low
+      - 27.7/57.4 ai
+      - 359 in air
+      - 359 in air
+      - 1083 in air
+      - 23 in vapor
+- Exlclude the following entries with CHEMICAL
+      - Malathion Fyfanon 440g/L formulation
+      - Pyraclostrobin/Triticonazole BAS 673-01F mixture
+- For those entries with TOXDATA including “form”, “product”, correct TOXDATA value by the “AI” column (which is the % active ingredient in the formulation)
 
-
+   
 ```{r}
 unique(toxdata$DOSETYPE)
-toxdata %>% filter(DOSETYPE %in% c("LC50", "EC50", "LD50", "LOEL", "LOEC", "EC25", "L100", "RT25", 
-"LR50", "BCF", "IC50", "IC25", "LC59", "LD35", "RT50", "LD40", 
-"ED50", "EC40", "NOEL"))%>%filter(TGL %in% c("",  ">", "<", "5")) %>% mutate(TOXICITY=) %>% filter(TOXLEVEL %in% c("PPM", "UG", "MGK", "PPB", "UGB", "LBA", "LBG", "LB/G", "N.R.", 
-"OZA", "UGC", "Oz/A", "KgH", "UGG", "N.A.", "kg/H", "oz/A", "gm/H", 
-"PPT", "gmH", "Hrs", "L/H", "Kg/h", "Kg/H", "ml/L", "L/Ha", "SML", 
-"L/ha", "UGK", "L/hl", "kg/h", "ug/g", "MGM3", "ml/H", "MG", 
-"GmH", "UGH", "MGM", "ugK", "MGG", "MKG"))
+beetox_OPP <- toxdata %>% filter(COMMONNAME=="Honey bee" & DOSETYPE %in% c("LC50", "LD50")  & TGL=="") %>% filter(TOXLEVEL %in% c("UGB")) %>% filter(STUDYTIME %in% c("48 hr","24 hr","3 D", "44 hr","48 H","48 Hr") ) %>% filter(!(CHEMICAL %in% c("Malathion Fyfanon 440g/L formulation","Pyraclostrobin/Triticonazole BAS 673-01F mixture")))
+dim(beetox_OPP)
 
+beetox_OPP <- beetox_OPP %>% filter(!(TOXICITY %in% c("0.18%", "Low", "27.7/57.4 ai",  "359 in air", "1083 in air", "23 in vapor")))
+
+
+id <- c(grep("form",beetox_OPP$TOXICITY),grep("product",beetox_OPP$TOXICITY))
+## For those entries with TOXDATA including “form”, “product”, correct TOXDATA value by the “AI” column (which is the % active ingredient in the formulation)
+beetox_OPP <- beetox_OPP %>% mutate(tox=as.numeric(unlist(lapply(str_split(TOXICITY," "),function(x)x[1]))))
+summary(beetox_OPP$tox)
+
+#beetox_OPP$tox[beetox_OPP$TOXLEVEL=="PPB"] <- beetox_OPP$tox[beetox_OPP$TOXLEVEL=="PPB"]/1000
+#beetox_OPP$TOXLEVEL[beetox_OPP$TOXLEVEL=="PPB"] <- "PPM"
+
+beetox_OPP$tox[id] <- beetox_OPP$tox[id]*1#as.numeric(beetox_OPP$AI[id])
+ 
+
+sd(beetox_OPP$tox,na.rm = T) / mean(beetox_OPP$tox,na.rm = T)
+## [1] 4.669772
+beetox_OPP <- beetox_OPP %>% filter(!is.na(tox))
+tmp <- beetox_OPP %>% group_by(CAS_NO)%>% summarise(ncas=n()) ## 159 CAS
+beetox_OPP <- left_join(beetox_OPP,tmp) 
+beetox_OPP <- beetox_OPP%>% filter(ncas>=3)
+length(unique(beetox_OPP$CAS_NO)) ## 45 CAS
 
 ```
 
 
 ```{r}
-toxdata$TGL
-toxdata$TOXICITY
+library(skimr)
+cv <- function(x,na.rm=T){
+  sd(x,na.rm = na.rm)/mean(x,na.rm = na.rm)
+}
+my_skim <- skim_with(numeric = sfl(cv,nobs=length))
+
 ```
+
+
+```{r}
+cv_sum <- beetox_OPP %>% group_by(CAS_NO) %>% summarise(mean_LD=mean(tox),sd_LD=sd(tox),cv=sd_LD/mean_LD)
+cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="Summary stats for overall CAS LD mean, sd, and CV ")%>%kableExtra::kable_classic()
+
+```
+
+
+```{r}
+beetox_OPP %>% group_by(CAS_NO,CHEMICAL) %>% my_skim(tox) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table: Summary stats for LD mean, sd, and CV for each CAS</strong></center>",
+    escape = FALSE)%>%kableExtra::kable_classic()
+```
+
 

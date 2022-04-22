@@ -1,0 +1,235 @@
+---
+title: "Additional Figures not included in the Manuscript"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(beemixtox1)
+library(tidyverse)
+```
+
+
+
+## Genrate Figure 4
+
+
+
+```{r}
+library(readr)
+Chemicals_Table <- read_csv("~/Projects/beemixtox_public/data-raw/paper1/Chemicals.Table.csv")
+#View(Chemicals_Table)
+Chemlables <- unique(Chemicals_Table$Label)
+Chemlables
+MoAs <- unique(Chemicals_Table$MoA)
+MoAs
+```
+
+```{r}
+library(circlize)
+
+genColor <- function(x){
+  sapply(x,function(y){
+    if(abs(y)<log10(2)) return("#D6E2EE") else{ ## orange white
+      if(y>log10(5)) return("#1F525E") else{ ## Blue Diane
+        if(y<log10(0.2)) return("#AD323C") else{ ## well red
+          if(y < log10(0.5)) return("#FAA5B5") else{ ## Rose bud
+            return("#2D8833") ## Forest Green
+          }
+        }
+      }
+    }
+    
+  })
+}
+col_fun = colorRamp2(c(log10(0.2),log10(0.5),0,log10(2),log10(5)), c("yellow","lightgreen", "#00FFFFFF", "lightblue","red"))
+longmat <- BCSdata %>% group_by(MoA.class.name)%>% summarise(medianLog10Q=median(log10Q))%>% mutate(class=cut(medianLog10Q,c(log10(0.2),log10(0.5),log10(2),log10(5))))%>%mutate(color=col_fun(medianLog10Q))%>% mutate(col2=genColor(medianLog10Q))
+circle1_MoA <- matrix(0,nrow=length(MoAs),ncol=length(MoAs))
+circle2_MoA <- matrix(0,nrow=length(MoAs),ncol=length(MoAs))
+col_MoA <- matrix("#00FFFFFF",nrow=length(MoAs),ncol=length(MoAs))
+rownames(circle1_MoA) <- colnames(circle1_MoA) <- MoAs
+rownames(col_MoA) <- colnames(col_MoA) <- MoAs
+for(i in 1:nrow(longmat)){
+  tmp <- longmat$MoA.class.name[i]
+  combo <- strsplit(as.vector(as.character(tmp)), " + ", fixed = TRUE)[[1]]
+  # circle1_MoA[combo[1],combo[2]] <- longmat$medianLog10Q[i]
+  # circle1_MoA[combo[2],combo[1]] <- longmat$medianLog10Q[i]
+  circle1_MoA[combo[1],combo[2]] <- 1
+  circle1_MoA[combo[2],combo[1]] <- 1
+  col_MoA[combo[2],combo[1]] <- longmat$col2[i]
+  col_MoA[combo[1],combo[2]] <- longmat$col2[i]
+  if(length(combo)>2){
+     circle1_MoA[combo[1],combo[3]] <- 1
+     circle1_MoA[combo[3],combo[1]] <- 1
+     circle1_MoA[combo[2],combo[3]] <- 1
+     circle1_MoA[combo[3],combo[2]] <- 1
+     col_MoA[combo[3],combo[1]] <- longmat$col2[i]
+     col_MoA[combo[3],combo[2]] <- longmat$col2[i]
+     col_MoA[combo[2],combo[3]] <- longmat$col2[i]
+     col_MoA[combo[1],combo[3]] <- longmat$col2[i]
+  }
+}
+
+
+## chordDiagram(circle1_MoA,grid.col = 1:13, symmetric = TRUE, col = col_fun)
+
+chordDiagram(circle1_MoA,grid.col = 1:13, symmetric = TRUE, col = col_MoA)
+```
+
+
+```{r}
+circle1_ChemLabel <- matrix(0,nrow=length(Chemlables),ncol=length(Chemlables))
+col_ChemLabel <- matrix("white",nrow=length(Chemlables),ncol=length(Chemlables))
+rownames(circle1_ChemLabel) <- colnames(circle1_ChemLabel) <- Chemlables
+rownames(col_ChemLabel) <- colnames(col_ChemLabel) <- Chemlables
+
+longmat <- BCSdata %>% group_by(Label.class.name)%>% summarise(medianLog10Q=median(log10Q))%>% mutate(class=cut(medianLog10Q,c(log10(0.2),log10(0.5),log10(2),log10(5))))%>% mutate(col2=genColor(medianLog10Q))
+for(i in 1:nrow(longmat)){
+  tmp <- longmat$Label.class.name[i]
+  combo <- strsplit(as.vector(as.character(tmp)), " + ", fixed = TRUE)[[1]]
+ # circle1_ChemLabel[combo[1],combo[2]] <- longmat$medianLog10Q[i]
+#   circle1_ChemLabel[combo[2],combo[1]] <- longmat$medianLog10Q[i]
+    circle1_ChemLabel[combo[1],combo[2]] <- 1
+  circle1_ChemLabel[combo[2],combo[1]] <- 1
+  col_ChemLabel[combo[2],combo[1]] <- longmat$col2[i]
+  col_ChemLabel[combo[1],combo[2]] <- longmat$col2[i]
+  if(length(combo)>2){
+     # circle1_ChemLabel[combo[1],combo[3]] <- longmat$medianLog10Q[i]
+     # circle1_ChemLabel[combo[3],combo[1]] <- longmat$medianLog10Q[i]
+     # circle1_ChemLabel[combo[2],combo[3]] <- longmat$medianLog10Q[i]
+     # circle1_ChemLabel[combo[3],combo[2]] <- longmat$medianLog10Q[i]
+     circle1_ChemLabel[combo[1],combo[3]] <- 1
+     circle1_ChemLabel[combo[3],combo[1]] <- 1
+     circle1_ChemLabel[combo[2],combo[3]] <- 1
+     circle1_ChemLabel[combo[3],combo[2]] <- 1
+     col_ChemLabel[combo[3],combo[1]] <- longmat$col2[i]
+     col_ChemLabel[combo[3],combo[2]] <- longmat$col2[i]
+     col_ChemLabel[combo[2],combo[3]] <- longmat$col2[i]
+     col_ChemLabel[combo[1],combo[3]] <- longmat$col2[i]
+  }
+}
+## Note that vsSCh and DMI appear in binary mixture and tietary mixture, the color was covered later, has to manually re-define. 
+i <- 1
+tmp <- longmat$Label.class.name[i]
+  combo <- strsplit(as.vector(as.character(tmp)), " + ", fixed = TRUE)[[1]]
+ # circle1_ChemLabel[combo[1],combo[2]] <- longmat$medianLog10Q[i]
+#   circle1_ChemLabel[combo[2],combo[1]] <- longmat$medianLog10Q[i]
+    circle1_ChemLabel[combo[1],combo[2]] <- 1
+  circle1_ChemLabel[combo[2],combo[1]] <- 1
+  col_ChemLabel[combo[2],combo[1]] <- longmat$col2[i]
+  col_ChemLabel[combo[1],combo[2]] <- longmat$col2[i]
+
+# chordDiagram(circle1_ChemLabel,grid.col = 1:10, symmetric = TRUE, col = col_fun)
+chordDiagram(circle1_ChemLabel,grid.col = 1:10, symmetric = TRUE, col = col_ChemLabel)
+
+
+```
+
+
+```{r single_mixture,include=FALSE,eval=FALSE}
+res1 <- simCVn(cvs=cvs,mean_sim=1,p=1,Nsim=Nsim)
+
+c1 <-res1%>%group_by(CV)%>% nest() %>% mutate(confusion=purrr::map(data,function(df) sapply(mdrs,function(x) sum(df>x)/Nsim)))%>% mutate(Mixture=1) %>% dplyr::select(-data) %>% unnest(cols=c(confusion)) %>% ungroup %>% mutate(cutoff=rep(mdrs,length(cvs))) %>% pivot_wider(names_from = cutoff,names_prefix="MDR>",values_from=confusion)
+
+r1 <- res1%>%group_by(CV)%>% summarise(mean=mean(MDR),q95=quantile(MDR,0.95)) %>% mutate(Mixture=1)
+
+res1$CV <- plyr::mapvalues(res1$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+r1$CV <- plyr::mapvalues(r1$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+res1$CV <- factor(res1$CV,levels=unique(res1$CV))
+r1$CV <- factor(r1$CV,levels=unique(r1$CV))
+ggplot(res1, aes(MDR,col=CV)) + stat_ecdf(geom = "point")+xlim(c(1,35))+geom_text(data=r1,aes(x=q95,y=seq(0.1,0.9,length=5),label = paste(formatC(q95)),col=CV))+geom_vline(data=r1,aes(xintercept = q95,col=CV),lty=2)
+
+ggplot(res1, aes(MDR,col=CV)) + geom_density()+xlim(c(0,35))+scale_x_log10()
+
+
+res2 <- simCVn(cvs=cvs,mean_sim=1,p=c(0.5,0.5),Nsim=Nsim)
+
+c2 <-res2%>%group_by(CV)%>% nest() %>% mutate(confusion=purrr::map(data,function(df) sapply(mdrs,function(x) sum(df>x)/Nsim)))%>% mutate(Mixture=2) %>% dplyr::select(-data) %>% unnest(cols=c(confusion)) %>% ungroup %>% mutate(cutoff=rep(mdrs,length(cvs))) %>% pivot_wider(names_from = cutoff,names_prefix="MDR>",values_from=confusion)
+
+r2 <- res2%>%group_by(CV)%>% summarise(mean=mean(MDR),q95=quantile(MDR,0.95))%>% mutate(Mixture=2)
+# ggplot(res2, aes(MDR,col=CV)) + stat_ecdf(geom = "point")+xlim(c(1,7))+ylab("")
+res2$CV <- plyr::mapvalues(res2$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+r2$CV <- plyr::mapvalues(r2$CV,from=c(0.3,0.6,1,1.4,3),to=paste0(cvs*100,"%"))
+res2$CV <- factor(res2$CV,levels=unique(res2$CV))
+r2$CV <- factor(r2$CV,levels=unique(r2$CV))
+
+p_sim_H0 <- ggplot(res2, aes(MDR,col=CV)) + stat_ecdf(geom = "step")+xlim(c(1,8))+ylab("")+geom_text(data=r2,aes(x=q95,y=seq(0.1,0.9,length=5),label = paste(formatC(q95)),col=CV))+geom_vline(data=r2,aes(xintercept = q95,col=CV),lty=2)
+p_sim_H0
+
+
+# ggplot(res2, aes(MDR,col=CV)) + geom_density()+scale_x_log10()+geom_vline(data=r2,aes(xintercept = q95,col=CV),lty=2)+geom_text(data=r2,aes(x=q95,y=seq(0.5,2,length=5),label = paste(formatC(q95)),col=CV))
+```
+
+
+### ECDF comparison
+
+We explore the simulated MDRs versus the experimental MDRs that we got. 
+- plot together both ECDFs and see how much overlap they had. 
+
+```{r}
+p0 <- ggplot(data=BCSdata, aes(log10Q)) +
+  stat_ecdf(pad = F, geom ="point") +
+  stat_ecdf(pad = F, geom ="step") +
+  geom_vline(xintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=log10(0.5), xmax=log10(2), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  annotate("rect", xmin=log10(0.2), xmax=log10(5), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.1,0.1,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+  labs(x="log10(MDR)",y="Fraction", title= "Cumulative probability")
+
+p0
+```
+
+```{r}
+cvs <- c(0.3,0.6,1,1.4,3)
+mdrs <- c(1.25,2,3,5)
+Nsim <- 10000
+Nout <- 100
+```
+
+```{r}
+res2 <- simCVn(cvs=cvs,mean_sim=1,p=c(0.5,0.5),Nsim=Nsim)
+res2$CV = plyr::mapvalues(res2$CV,from=unique(res2$CV),to=paste0(as.numeric(unique(res2$CV))*100,"%"))
+```
+
+```{r}
+p0+stat_ecdf(data=res2,aes(x=log10(MDR),col=CV))#+geom_ribbon(data=res2,aes(x=log10(MDR),col=CV,ymin = ..y..-2,ymax = ..y..+2), stat = "ecdf",alpha=0.2)
+if(interactive()) ggsave("../../inst/manuscript/ECDF_comparion.png", width=12, height = 5, units = "in")
+```
+
+```{r}
+res2.1 <- rbind(res2,data.frame(CV="BCS Data",MDR=BCSdata$quotient))
+ggplot(res2.1,aes(sample = log10(MDR), color=CV))+stat_qq()
+if(interactive()) ggsave("../../inst/manuscript/ECDF_comparion_qq.png", width=12, height = 5, units = "in")
+```
+
+
+### Figure 3
+
+```{r}
+ggplot(BCSdata,aes(x=Label.class.name,y=log10Q))+
+  geom_boxplot(fill="grey75", outlier.shape = NA)+
+  geom_jitter(width = 0.2, alpha=0.7, aes(colour = Exposure.Type, share = )) +
+  # geom_boxplot(aes(fill=Label.class.name))+
+  # geom_boxplot(aes(fill=combo.Type.name))+
+  geom_hline(yintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.5), ymax=log10(2), alpha=0.2) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.2), ymax=log10(5), alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.5,0.3,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        # legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+        legend.position="top")+
+  labs(x=NULL,y="log10(MDR)")+
+  coord_flip(ylim = c(min(BCSdata$log10Q, na.rm = T), max(BCSdata$log10Q, na.rm = T)))
+```
+
+
+
