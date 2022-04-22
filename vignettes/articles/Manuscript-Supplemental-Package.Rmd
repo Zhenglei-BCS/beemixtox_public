@@ -234,13 +234,13 @@ In the 2nd simulation study, for each reduction factor N ($N=2,5,10$). for the 1
 
 Similar to the previous simulation, an MDR was calculated for each simulation run. The distribution of the resulting MDR values was then determined. We repeated this process for CVs of 30%, 60%, 100%, 140% and 300%.  We also conducted the analysis for binary and tertiary mixtures.The proportion of samples that would be classified correctly as synergistic if using the following reference levels of threshold MDR:  2, 3, 5, 10 are calulated in the end.
 
-For each CV and MDR threshold combination, the confusion matrix were calculated and summarized in Table S4-S6. The aim is to find a balancing point where the false positive rates is low enough (below 5% or 10%) and the power to detect the true synergism effect is high enough (above 75% or 80%). 
+For each CV and MDR threshold combination, the confusion matrix were calculated and summarized in Table S4-S6. The aim is to find a balancing point where the false positive rates is low enough (below 5% or 10%) and the power to detect the true synergism effect is high enough (above 75% or 80%). When the CV is high and the synergism effect is low, it is naturally hard to distinguish between the toxicity variability within one single component of the mixture and the synergism effect caused by the mixture properties. Low MDR thresholds would provide enough power for the detecting the effect but would have a high false positive rates when there is actually no such effect.  When the CV is low or medium, for example, when CV is between 30% and 100%,  it is possible to use MDR of 5 to detect a reasonable size of synergism effect (reduction factor greater than 5) with true positive rates around 70% and false positive rates below 5%. On the other hand, it is not possible to find a balancing point for synergism effect with reduction factor of 2, even with the lowest CV used in the simulation, the true positive rate is always below 60%. 
 
 
 
 
-```{r fig.cap="Figure S4: Confusion Matrix (Need to change it)"}
-knitr::include_graphics("assets/confusion.png")
+```{r fig.cap="Figure S4: Confusion Matrix"}
+knitr::include_graphics("assets/confusion1.png")
 ```
 
 **Confusion matrix and quantiles for MDR**
@@ -250,7 +250,7 @@ Res_Null <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
                          mdrs=c(2,3,5,10),
                          Nsim=12000,
                          synergy=F,q=0.95)
-sim_H0 <- ggplot(Res_Null$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.05,lty=2)+xlab("MDR Cutoff")+ylab("False Positive Rate")
+sim_H0 <- ggplot(Res_Null$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.05,lty=2)+xlab("MDR Cutoff")+ylab("False Positive Rate")+ggtitle("No Synery")
 ```
 
 
@@ -260,7 +260,7 @@ Res_Alt <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
                          Nsim=12000,
                          synergy=T,reduction=0.5,q=0.95)
 
-sim_H2 <- ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Reduction Factor of 2")+ylab("True Positive Rate")
+sim_H2 <- ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Synergy: Reduction Factor of 2")+ylab("True Positive Rate")
 ```
 
 
@@ -293,7 +293,7 @@ Res_Alt <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
                          Nsim=12000,
                          synergy=T,reduction=0.8,q=0.95)
 
-sim_H5 <- ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Reduction Factor of 5")+xlab("MDR Cutoff")
+sim_H5 <- ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Synergy: Reduction Factor of 5")+ylab("True Positive Rate")
 Res_Alt$confusion$Truth <- "synergy"
 
 Res_Null$confusion$Truth <- "No synergy"
@@ -324,7 +324,7 @@ Res_Alt <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
                          Nsim=12000,
                          synergy=T,reduction=0.9,q=0.95)
 
-sim_H10 <- ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Reduction Factor of 10")
+sim_H10 <- ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Synergy: Reduction Factor of 10")+ylab("True Positive Rate")
 Res_Alt$confusion$Truth <- "synergy"
 Res_Null$confusion$Truth <- "No synergy"
 tmp <- rbind(Res_Null$confusion,Res_Alt$confusion)%>%pivot_wider(names_from = Truth,values_from=value)%>%mutate(Decision="Reject H0")
@@ -346,6 +346,14 @@ conf10 <- conf %>% rename(`Synery Factor 10`=synergy)
 conf %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"%"))%>%mutate(Mixture=plyr::mapvalues(Mixture,from=c(2,3),to=c("Binary","Tertiary"))) %>% knitr::kable(., "html",caption="<center><strong>Table S6: The Confusion Matrix using different MDR thresholds when reduction factor is 10</strong></center>", escape = FALSE) %>%kable_paper(c("striped"),full_width = T) %>% collapse_rows(columns = c(1,2,3))
 ```
 
+
+
+```{r fig.cap="Combined plots: edit later",fig.align="center",fig.width=12,fig.height=7}
+library(patchwork)
+sim_H0+sim_H2+sim_H5+sim_H10+plot_annotation(tag_levels = 'A')+ plot_layout(guides = "collect")
+```
+
+
 ```{r}
 confall <- left_join(conf2,conf5)
 confall <- left_join(confall,conf10)
@@ -353,10 +361,6 @@ confall %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*10
 ```
 
 
-```{r fig.cap="Combined plots: edit later",fig.align="center",fig.width=12,fig.height=7}
-library(patchwork)
-sim_H0+sim_H2+sim_H5+sim_H10+plot_annotation(tag_levels = 'A')+ plot_layout(guides = "collect")
-```
 
 
 ## Confidence bands for MDR threholds
