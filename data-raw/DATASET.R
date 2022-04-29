@@ -2,6 +2,9 @@
 
 #cleaning the environemt
 rm(list=ls())
+
+## Note beetox_OPP is generated using `vignettes/articles/OPP-Database-Handling-and-Analysis.Rmd`
+
 casinfo <- read.csv("~/Projects/beemixtox_public/data-raw/CCD-Batch-Search_2022-04-21_01_35_56.csv")
 casinfo$PREFERRED_NAME[casinfo$INPUT=="1910-42-5"]
 id <-which(casinfo$PREFERRED_NAME=="Paraquat" )

@@ -50,9 +50,6 @@ library(patchwork)
 setwd(Dir_Data_SSD)
 Data.SSD = read.csv("Copy of etc4373-sup-0002-supmat.csv")
 
-#Load data (USEPA internal not for publication)
-setwd(Dir_Data.1)
-Data.B = read.csv(file = "Copy of Brian-May2009.csv")
 
 #Load data
 setwd(Dir_Data)
@@ -177,34 +174,3 @@ write.csv(Bee.var, file = "Bee.var_ECOTOX_BeeLD50_Curated.csv", row.names = F)
 Data.2.Ref = unique(Data.2[,c(70,71,72,73,74)])
 write.csv(Data.2.Ref, file = "Data.2.Ref_ECOTOX_BeeLD50_Curated.csv", row.names = F)
 
-## Analysis of Data.B (USEPA internal, not for external use)
-Data.B.1 = Data.B[Data.B$GUIDELINE=="141-1",] #restrict to relevant guideline
-Data.B.1 = droplevels(Data.B.1)
-table(Data.B.1$TAXA)
-table(Data.B.1$TGL)
-Data.B.1$TOXICITY = as.numeric(as.character(Data.B.1$TOXICITY))
-Data.B.1 = Data.B.1[complete.cases(Data.B.1$TOXICITY),]
-
-#Only definitive values
-Data.B.1 = Data.B.1[Data.B.1$TGL=="",]
-B.Bee.var.N = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, length)
-B.Bee.var.Ave = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, mean)
-B.Bee.var.sd = aggregate(TOXICITY ~ CAS_NO, data =Data.B.1, sd)
-
-# Merge
-B.Bee.var = merge(B.Bee.var.N,B.Bee.var.Ave, by="CAS_NO")
-B.Bee.var = merge(B.Bee.var,B.Bee.var.sd, by="CAS_NO")
-names(B.Bee.var) [c(2:4)] = c("N", "Mean", "sd")
-
-# Restrict to at least 4 cases per CAS
-B.Bee.var = B.Bee.var[B.Bee.var$N>3,] # 16 chemicals
-B.Bee.var$CV.Perc = 100*(B.Bee.var$sd/B.Bee.var$Mean)
-
-write.csv(summary(Bee.var[,c(2:5)]), file = "Summary_ECOTOX-KB-LD50CV.csv")
-
-# Summary of CV%
-summary(B.Bee.var$CV.Perc)
-plot(B.Bee.var$N,B.Bee.var$CV.Perc)
-plot(log10(B.Bee.var$Mean), B.Bee.var$CV.Perc)
-
-#

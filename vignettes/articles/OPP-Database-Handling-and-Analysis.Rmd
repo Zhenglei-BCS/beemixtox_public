@@ -1,0 +1,154 @@
+---
+title: "OPP Database Handling and Analysis"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval=F
+)
+```
+
+```{r setup}
+library(beemixtox1)
+```
+
+
+- Data selection and curation: 
+  - Unit with UGB UGB = microgram/bee (We assume generally all data is reported as ug ai/bee unless TOXDATA include reference to “form” or “product”)
+  - Remove all entries reported as ppb or ppm (these are not typical study designs)
+  - Limit to chemicals with at least 4 LD50 reported 
+  - Exclude the following entries in the TOXDATA:
+      - 0.18%
+      - Low
+      - 27.7/57.4 ai
+      - 359 in air
+      - 359 in air
+      - 1083 in air
+      - 23 in vapor
+- Exlclude the following entries with CHEMICAL
+      - Malathion Fyfanon 440g/L formulation
+      - Pyraclostrobin/Triticonazole BAS 673-01F mixture
+- For those entries with TOXDATA including “form”, “product”, correct TOXDATA value by the “AI” column (which is the % active ingredient in the formulation)
+
+   
+```{r}
+unique(toxdata$DOSETYPE)
+beetox_OPP <- toxdata %>% filter(COMMONNAME=="Honey bee" & DOSETYPE %in% c("LC50", "LD50")  & TGL=="") %>% filter(TOXLEVEL %in% c("UGB")) %>% filter(STUDYTIME %in% c("48 hr","24 hr","3 D", "44 hr","48 H","48 Hr") ) %>% filter(!(CHEMICAL %in% c("Malathion Fyfanon 440g/L formulation","Pyraclostrobin/Triticonazole BAS 673-01F mixture")))
+dim(beetox_OPP)
+
+beetox_OPP <- beetox_OPP %>% filter(!(TOXICITY %in% c("0.18%", "Low", "27.7/57.4 ai",  "359 in air", "1083 in air", "23 in vapor")))
+
+id1 <- grep("/",beetox_OPP$AI)
+beetox_OPP[id1,c("CHEMICAL","AI","TOXICITY")] %>% kable(.,caption="Mixtures and Formulations, mixtures will be excluded; Replace g/L assuming density = 1. So, 100g/L = 10%, 200g/L = 20%, etc.")%>%kableExtra::kable_paper()
+# [1] "95/5"    "34/18"   "56/6.2"  "14/28"   "200g/L"  "100g/L"  "20.6/20" "20.6/20" "1/7.5"   "1/7.5"   "13.3/5"
+#[12] "0.5/0.1" "58/6"    "6/58"    "17/26"   "1.4/2.1"
+### Remove all "/" entries since they are mixtures.
+## Replace g/L assuming density = 1. So, 100g/L = 10%, 200g/L = 20%, etc.
+beetox_OPP <-beetox_OPP %>% mutate(AI=plyr::mapvalues(AI,from=c("200g/L","100g/L"),to=c("20","10")))
+
+id1 <- grep("/",beetox_OPP$AI)
+beetox_OPP <- beetox_OPP[-id1,]
+grep("/",beetox_OPP$AI)
+
+id <- c(grep("form",beetox_OPP$TOXICITY),grep("product",beetox_OPP$TOXICITY))
+grep("/",beetox_OPP$AI[id])
+
+### There is no form or product anymore!
+```
+
+
+```{r}
+id2 <- c(grep("WG",beetox_OPP$AI),grep("EC",beetox_OPP$AI),grep("SC",beetox_OPP$AI))
+
+beetox_OPP[id2,c("CHEMICAL","AI","TOXICITY")] %>% kable(.,caption="Formulations: Take the number as %")%>%kableExtra::kable_paper()
+
+## For these ones remove the EC/SD or WG and use the nubmer as percentage?
+beetox_OPP <- beetox_OPP %>% mutate(ai=gsub("WG","",AI)) %>% mutate(ai=gsub("SC","",ai)) %>% mutate(ai=gsub("EC","",ai))
+
+## beetox_OPP[id2,"ai"]
+
+## Now
+```
+
+
+Consider all the values that cannot be converted to a %. 
+
+```{r}
+id3 <-which(is.na(as.numeric(beetox_OPP$ai)))
+
+unique(beetox_OPP$AI[id3])
+beetox_OPP[id3,c("CHEMICAL","AI","TOXICITY")] %>% kable(.,caption="Other non-numeric AI entries")%>%kableExtra::kable_paper()
+```
+
+
+For Tech grade make the ai % 100%. 
+Keep all "N.R" as 100%.
+
+```{r}
+######
+beetox_OPP$ai[grep("Tech",beetox_OPP$AI)] <- 100
+beetox_OPP$ai[grep("tech",beetox_OPP$AI)] <- 100
+beetox_OPP$ai[grep("N.R",beetox_OPP$AI)] <- 100
+
+################
+```
+
+```{r}
+id4 <- beetox_OPP$AI %in% (unique(beetox_OPP$AI[id3])[-c(1,4)])
+
+beetox_OPP[id4,c("CHEMICAL","AI","TOXICITY")] %>% kable(.,caption="N.R, FORM, ISOM: NR being kept as 100%, other s excluded")%>%kableExtra::kable_paper()
+```
+
+Exclude all other.
+
+```{r}
+id5 <- unique(c(grep("FORM",beetox_OPP$AI),grep("Form",beetox_OPP$AI),grep("ISOM",beetox_OPP$AI)))
+beetox_OPP <- beetox_OPP[-id5,] ### could be -id4
+```
+
+
+Check if ai is included in the Toxicity column
+
+```{r}
+id6 <- unique(c(grep("ai",beetox_OPP$TOXICITY),grep("as",beetox_OPP$TOXICITY)))
+beetox_OPP[id6,c("CHEMICAL","AI","TOXICITY")] %>% kable(.,caption="Reported as AI or AS, but with AI entries not 100%, changed to 100%")%>%kableExtra::kable_paper()
+beetox_OPP$ai[id6] <- 100
+
+```
+
+
+```{r}
+beetox_OPP$ai <- as.numeric(beetox_OPP$ai)
+sum(is.na(beetox_OPP$ai))
+```
+
+
+
+```{r}
+## For those entries with TOXDATA including “form”, “product”, correct TOXDATA value by the “AI” column (which is the % active ingredient in the formulation)
+beetox_OPP <- beetox_OPP %>% mutate(tox=as.numeric(unlist(lapply(str_split(TOXICITY," "),function(x)x[1]))))
+summary(beetox_OPP$tox)
+
+#beetox_OPP$tox[beetox_OPP$TOXLEVEL=="PPB"] <- beetox_OPP$tox[beetox_OPP$TOXLEVEL=="PPB"]/1000
+#beetox_OPP$TOXLEVEL[beetox_OPP$TOXLEVEL=="PPB"] <- "PPM"
+
+beetox_OPP$tox_ai <- beetox_OPP$tox*beetox_OPP$ai/100
+ 
+
+sd(beetox_OPP$tox,na.rm = T) / mean(beetox_OPP$tox,na.rm = T)
+## [1] 4.669772
+beetox_OPP <- beetox_OPP %>% filter(!is.na(tox))
+tmp <- beetox_OPP %>% group_by(CAS_NO)%>% summarise(ncas=n()) ## 159 CAS
+beetox_OPP <- left_join(beetox_OPP,tmp) 
+beetox_OPP <- beetox_OPP%>% filter(ncas>3)
+length(unique(beetox_OPP$CAS_NO)) ## 45 CAS ==> 23 cas
+
+```
+
+
+```{r include=F,eval=F}
+usethis::use_data(beetox_OPP,overwrite = T)
+```
+

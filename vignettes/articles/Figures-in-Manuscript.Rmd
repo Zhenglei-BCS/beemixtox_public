@@ -1,0 +1,212 @@
+---
+title: "Generate Figures in Manuscript"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(beemixtox1)
+library(tidyverse)
+library(patchwork)
+```
+
+
+## Generate Figure 1 for the BCS dataset Analysis
+
+```{r}
+
+p1 <- ggplot(data=BCSdata, aes(log10Q, colour = Time)) +
+  stat_ecdf(pad = F, geom ="point") +
+  stat_ecdf(pad = F, geom ="step") +
+  geom_vline(xintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=log10(0.5), xmax=log10(2), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  annotate("rect", xmin=log10(0.2), xmax=log10(5), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.1,0.1,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        # legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+        legend.position="top")+
+  labs(x="log10(MDR)",y="Prob")#+ggtitle("Actual BCS Data")
+```
+
+
+```{r}
+p2 <- ggplot(data=BCSdata, aes(log10Q, colour = Exposure.Type)) +
+  stat_ecdf(pad = F, geom ="point") +
+  stat_ecdf(pad = F, geom ="step") +
+  geom_vline(xintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=log10(0.5), xmax=log10(2), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  annotate("rect", xmin=log10(0.2), xmax=log10(5), ymin=-Inf, ymax=Inf, alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.1,0.1,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        # legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+        legend.position="top")+
+      labs(x="log10(MDR)",y="Prob")
+```
+
+
+```{r}
+p3 <- ggplot(BCSdata, aes(x=as.factor(CLASSIFICATION),y=log10Q))+
+  # Plot9<-ggplot(Data,aes(x=as.factor(N.combo.class),y=log10Q))+
+  geom_boxplot(fill="grey75")+
+  geom_jitter(width = 0.2, alpha=0.7, aes(colour = Exposure.Type)) +
+  # geom_boxplot(aes(fill=combo.class.name))+
+  # geom_boxplot(aes(fill=combo.Type.name))+
+  geom_hline(yintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.5), ymax=log10(2), alpha=0.2) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.2), ymax=log10(5), alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.1,0.1,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        # legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+        legend.position="top")+
+  labs(x="Matching class",y="log10(MDR)")
+```
+
+
+```{r fig.width=12,fig.height=5,fig.cap="Figure 1. Influence of Exposure time, Exposure route and quality of matching on acute bee MDRs"}
+p1 + p2 +p3+
+  # plot_layouttg(guides = 'collect') +
+  plot_annotation(tag_levels = 'A')
+if(interactive()) ggsave("inst/manuscript/Paper_Figure1_ecdfs.pdf", width=12, height = 5, units = "in")
+if(interactive()) ggsave("inst/manuscript/Paper_Figure1_ecdfs.png", width=12, height = 5, units = "in")
+```
+
+
+### Figure 2 for the BCS dataset Analysis
+
+```{r fig.height=8,fig.cap="Figure 2: Acute bee MDR values by chemical combination"}
+ggplot(BCSdata,aes(x=combo.name,y=log10Q))+
+  geom_boxplot(fill="grey75", outlier.shape = NA)+
+  geom_jitter(width = 0.2, alpha=0.7, aes(colour = Exposure.Type)) +
+  # geom_boxplot(aes(fill=combo.class.name))+
+  # geom_boxplot(aes(fill=combo.Type.name))+
+  geom_hline(yintercept = c(0, log10(2), log10(5), log10(0.5), log10(0.2)), linetype = c(1,2,3,2,3)) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.5), ymax=log10(2), alpha=0.2) +
+  annotate("rect", xmin=-Inf, xmax=Inf, ymin=log10(0.2), ymax=log10(5), alpha=0.2) +
+  theme_classic()+
+  theme(plot.margin = unit(c(0.1,0.5,0.3,0.1), "cm"), plot.title = element_text(size = 18), strip.text.x =element_text(size = 14), rect = element_blank(), panel.border=element_rect(size=2,fill=NA, colour='black'),
+        axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
+        # legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
+        legend.position="top")+
+  labs(x=NULL,y="log10(MDR)")+
+  coord_flip(ylim = c(min(BCSdata$log10Q, na.rm = T), max(BCSdata$log10Q, na.rm = T)))
+
+
+if(interactive()) ggsave("inst/manuscript/Paper_Figure2.pdf", width=12, height = 12, units = "in")
+if(interactive()) ggsave("inst/manuscript/Paper_Figure2.png", width=12, height = 12, units = "in")
+```
+
+## Generate Figure 3 for simulation study. 
+
+
+```{r fig.cap="Figure S5: False Positive Rate when there is no synergy"}
+Res_Null <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
+                         mdrs=c(2,3,5,10),
+                         Nsim=12000,
+                         synergy=F,q=0.95)
+sim_H0 <- ggplot(Res_Null$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.05,lty=2)+xlab("MDR Cutoff")+ylab("False Positive Rate")+ggtitle("No Synery")
+```
+
+
+```{r fig.cap="Figure S6: Power to detect synery when there is a reduction factor of 2"}
+Res_Alt <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
+                         mdrs=c(2,3,5,10),
+                         Nsim=12000,
+                         synergy=T,reduction=0.5,q=0.95)
+
+sim_H2 <- ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Synergy: Reduction Factor of 2")+ylab("True Positive Rate")
+```
+
+
+```{r}
+Res_Alt$confusion$Truth <- "synergy"
+Res_Null$confusion$Truth <- "No synergy"
+tmp <- rbind(Res_Null$confusion,Res_Alt$confusion)%>%pivot_wider(names_from = Truth,values_from=value)%>%mutate(Decision="Reject H0")
+
+confusion <- rbind(tmp,tmp %>% mutate(`No synergy`=1-`No synergy`,synergy=1-synergy,Decision="Do not reject H0"))
+
+conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr::map(data,function(df){
+  df[2:1,c(3,1,2)]%>%mutate(`No synergy`=paste0(c("True Negative=","False Positive="),formatC(`No synergy`*100,digits = 1,format="f"),"%"),synergy=paste0(c("False Negative=","True Positive="),formatC(synergy*100,digits = 1,format="f"),"%"))
+}))%>%unnest(cols = c(data))
+library(kableExtra)
+conf2 <- conf %>% rename(`Synery Factor 2`=synergy)
+## conf %>% knitr::kable(., "markdown")
+```
+
+
+```{r eval=F,include=F}
+conf %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"%"))%>%mutate(Mixture=plyr::mapvalues(Mixture,from=c(2,3),to=c("Binary","Tertiary"))) %>% knitr::kable(., "html",caption="<center><strong>Table S4: The Confusion Matrix using different MDR thresholds when reduction factor is 2</strong></center>", escape = FALSE) %>%kable_paper(c("striped"),full_width = T) %>% collapse_rows
+```
+
+
+
+
+```{r}
+Res_Alt <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
+                         mdrs=c(2,3,5,10),
+                         Nsim=12000,
+                         synergy=T,reduction=0.8,q=0.95)
+
+sim_H5 <- ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Synergy: Reduction Factor of 5")+ylab("True Positive Rate")
+Res_Alt$confusion$Truth <- "synergy"
+
+Res_Null$confusion$Truth <- "No synergy"
+tmp <- rbind(Res_Null$confusion,Res_Alt$confusion)%>%pivot_wider(names_from = Truth,values_from=value)%>%mutate(Decision="Reject H0")
+
+confusion <- rbind(tmp,tmp %>% mutate(`No synergy`=1-`No synergy`,synergy=1-synergy,Decision="Do not reject H0"))
+
+conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr::map(data,function(df){
+  df[2:1,c(3,1,2)]%>%mutate(`No synergy`=paste0(c("True Negative=","False Positive="),formatC(`No synergy`*100,digits = 1,format="f"),"%"),synergy=paste0(c("False Negative=","True Positive="),formatC(synergy*100,digits = 1,format="f"),"%"))
+}))%>%unnest(cols = c(data))
+library(kableExtra)
+conf5 <- conf %>% rename(`Synery Factor 5`=synergy)
+## conf %>% knitr::kable(., "markdown")
+```
+
+```{r eval=F,include=F}
+#conf %>% knitr::kable(., "html",caption="<center><strong>Table S5: Confusion matrix with reduction factor of 5</strong></center>", escape = FALSE) %>%kable_paper(full_width = T) %>% collapse_rows
+
+conf %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"%"))%>%mutate(Mixture=plyr::mapvalues(Mixture,from=c(2,3),to=c("Binary","Tertiary"))) %>% knitr::kable(., "html",caption="<center><strong>Table S5: The Confusion Matrix using different MDR thresholds when reduction factor is 5</strong></center>", escape = FALSE) %>%kable_paper(c("striped"),full_width = T) %>% collapse_rows
+```
+
+
+
+
+```{r}
+Res_Alt <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
+                         mdrs=c(2,3,5,10),
+                         Nsim=12000,
+                         synergy=T,reduction=0.9,q=0.95)
+
+sim_H10 <- ggplot(Res_Alt$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.75,lty=2)+xlab("MDR Cutoff")+ggtitle("Synergy: Reduction Factor of 10")+ylab("True Positive Rate")
+Res_Alt$confusion$Truth <- "synergy"
+Res_Null$confusion$Truth <- "No synergy"
+tmp <- rbind(Res_Null$confusion,Res_Alt$confusion)%>%pivot_wider(names_from = Truth,values_from=value)%>%mutate(Decision="Reject H0")
+
+confusion <- rbind(tmp,tmp %>% mutate(`No synergy`=1-`No synergy`,synergy=1-synergy,Decision="Do not reject H0"))
+
+conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr::map(data,function(df){
+  df[2:1,c(3,1,2)]%>%mutate(`No synergy`=paste0(c("True Negative=","False Positive="),formatC(`No synergy`*100,digits = 1,format="f"),"%"),synergy=paste0(c("False Negative=","True Positive="),formatC(synergy*100,digits = 1,format="f"),"%"))
+}))%>%unnest(cols = c(data))
+library(kableExtra)
+
+##conf %>% knitr::kable(., "markdown")
+conf10 <- conf %>% rename(`Synery Factor 10`=synergy)
+```
+
+
+
+```{r fig.cap="Figure 3: True and false positive rates under different synergy assumption",fig.align="center",fig.width=12,fig.height=7}
+library(patchwork)
+
+sim_H0+sim_H2+sim_H5+sim_H10+plot_annotation(tag_levels = 'A')+ plot_layout(guides = "collect")
+if(interactive()) ggsave(file="inst/manuscript/Figure3.png",width=12,height=7,dpi=300)
+
+```

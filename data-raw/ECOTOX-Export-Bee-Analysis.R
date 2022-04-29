@@ -15,8 +15,6 @@ library(patchwork)
 
 Data.SSD = read.csv("~/Projects/beemixtox_public/data-raw/data/Copy of etc4373-sup-0002-supmat.csv")
 
-# Load data (USEPA internal not for publication)
-# Data.B = read.csv(file = "Copy of Brian-May2009.csv")
 
 #Load data
 
