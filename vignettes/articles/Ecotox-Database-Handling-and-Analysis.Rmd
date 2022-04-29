@@ -232,6 +232,9 @@ plot(log10(B.Bee.var$Mean), B.Bee.var$CV.Perc)
 ```
 
 
+
+## 
+
 ## Correlations among variables
 
 In this section we we use EDA and ANOVA to check possible correlations among the variables.   

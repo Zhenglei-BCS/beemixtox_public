@@ -12,6 +12,7 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(beemixtox1)
 library(tidyverse)
+library(knitr)
 ```
 
 The purpose of this analysis is to make sure the data used in the manuscript is comparable to data from other databases. (Norman EMPODAT database, SUSDAT, EHype v3, SSD data from Posthuma)
@@ -42,8 +43,93 @@ dim(beetox_OPP)
 
 beetox_OPP <- beetox_OPP %>% filter(!(TOXICITY %in% c("0.18%", "Low", "27.7/57.4 ai",  "359 in air", "1083 in air", "23 in vapor")))
 
+id1 <- grep("/",beetox_OPP$AI)
+beetox_OPP[id1,c("CHEMICAL","AI","TOXICITY")] %>% kable(.,caption="Mixtures and Formulations, mixtures will be excluded; Replace g/L assuming density = 1. So, 100g/L = 10%, 200g/L = 20%, etc.")%>%kableExtra::kable_paper()
+# [1] "95/5"    "34/18"   "56/6.2"  "14/28"   "200g/L"  "100g/L"  "20.6/20" "20.6/20" "1/7.5"   "1/7.5"   "13.3/5"
+#[12] "0.5/0.1" "58/6"    "6/58"    "17/26"   "1.4/2.1"
+### Remove all "/" entries since they are mixtures.
+## Replace g/L assuming density = 1. So, 100g/L = 10%, 200g/L = 20%, etc.
+beetox_OPP <-beetox_OPP %>% mutate(AI=plyr::mapvalues(AI,from=c("200g/L","100g/L"),to=c("20","10")))
+
+id1 <- grep("/",beetox_OPP$AI)
+beetox_OPP <- beetox_OPP[-id1,]
+grep("/",beetox_OPP$AI)
 
 id <- c(grep("form",beetox_OPP$TOXICITY),grep("product",beetox_OPP$TOXICITY))
+grep("/",beetox_OPP$AI[id])
+
+### There is no form or product anymore!
+```
+
+
+```{r}
+id2 <- c(grep("WG",beetox_OPP$AI),grep("EC",beetox_OPP$AI),grep("SC",beetox_OPP$AI))
+
+beetox_OPP[id2,c("CHEMICAL","AI","TOXICITY")] %>% kable(.,caption="Formulations: Take the number as %")%>%kableExtra::kable_paper()
+
+## For these ones remove the EC/SD or WG and use the nubmer as percentage?
+beetox_OPP <- beetox_OPP %>% mutate(ai=gsub("WG","",AI)) %>% mutate(ai=gsub("SC","",ai)) %>% mutate(ai=gsub("EC","",ai))
+
+## beetox_OPP[id2,"ai"]
+
+## Now
+```
+
+
+Consider all the values that cannot be converted to a %. 
+
+```{r}
+id3 <-which(is.na(as.numeric(beetox_OPP$ai)))
+
+unique(beetox_OPP$AI[id3])
+beetox_OPP[id3,c("CHEMICAL","AI","TOXICITY")] %>% kable(.,caption="Other non-numeric AI entries")%>%kableExtra::kable_paper()
+```
+
+
+For Tech grade make the ai % 100%. 
+Keep all "N.R" as 100%.
+
+```{r}
+######
+beetox_OPP$ai[grep("Tech",beetox_OPP$AI)] <- 100
+beetox_OPP$ai[grep("tech",beetox_OPP$AI)] <- 100
+beetox_OPP$ai[grep("N.R",beetox_OPP$AI)] <- 100
+
+################
+```
+
+```{r}
+id4 <- beetox_OPP$AI %in% (unique(beetox_OPP$AI[id3])[-c(1,4)])
+
+beetox_OPP[id4,c("CHEMICAL","AI","TOXICITY")] %>% kable(.,caption="N.R, FORM, ISOM: NR being kept as 100%, other s excluded")%>%kableExtra::kable_paper()
+```
+
+Exclude all other.
+
+```{r}
+id5 <- unique(c(grep("FORM",beetox_OPP$AI),grep("Form",beetox_OPP$AI),grep("ISOM",beetox_OPP$AI)))
+beetox_OPP <- beetox_OPP[-id5,] ### could be -id4
+```
+
+
+Check if ai is included in the Toxicity column
+
+```{r}
+id6 <- unique(c(grep("ai",beetox_OPP$TOXICITY),grep("as",beetox_OPP$TOXICITY)))
+beetox_OPP[id6,c("CHEMICAL","AI","TOXICITY")] %>% kable(.,caption="Reported as AI or AS, but with AI entries not 100%, changed to 100%")%>%kableExtra::kable_paper()
+beetox_OPP$ai[id6] <- 100
+
+```
+
+
+```{r}
+beetox_OPP$ai <- as.numeric(beetox_OPP$ai)
+sum(is.na(beetox_OPP$ai))
+```
+
+
+
+```{r}
 ## For those entries with TOXDATA including “form”, “product”, correct TOXDATA value by the “AI” column (which is the % active ingredient in the formulation)
 beetox_OPP <- beetox_OPP %>% mutate(tox=as.numeric(unlist(lapply(str_split(TOXICITY," "),function(x)x[1]))))
 summary(beetox_OPP$tox)
@@ -51,7 +137,7 @@ summary(beetox_OPP$tox)
 #beetox_OPP$tox[beetox_OPP$TOXLEVEL=="PPB"] <- beetox_OPP$tox[beetox_OPP$TOXLEVEL=="PPB"]/1000
 #beetox_OPP$TOXLEVEL[beetox_OPP$TOXLEVEL=="PPB"] <- "PPM"
 
-beetox_OPP$tox[id] <- beetox_OPP$tox[id]*1#as.numeric(beetox_OPP$AI[id])
+beetox_OPP$tox_ai <- beetox_OPP$tox*beetox_OPP$ai/100
  
 
 sd(beetox_OPP$tox,na.rm = T) / mean(beetox_OPP$tox,na.rm = T)
@@ -59,8 +145,8 @@ sd(beetox_OPP$tox,na.rm = T) / mean(beetox_OPP$tox,na.rm = T)
 beetox_OPP <- beetox_OPP %>% filter(!is.na(tox))
 tmp <- beetox_OPP %>% group_by(CAS_NO)%>% summarise(ncas=n()) ## 159 CAS
 beetox_OPP <- left_join(beetox_OPP,tmp) 
-beetox_OPP <- beetox_OPP%>% filter(ncas>=3)
-length(unique(beetox_OPP$CAS_NO)) ## 45 CAS
+beetox_OPP <- beetox_OPP%>% filter(ncas>3)
+length(unique(beetox_OPP$CAS_NO)) ## 45 CAS ==> 23 cas
 
 ```
 
@@ -75,6 +161,8 @@ my_skim <- skim_with(numeric = sfl(cv,nobs=length))
 ```
 
 
+
+## Not multiplied by AI column
 ```{r}
 cv_sum <- beetox_OPP %>% group_by(CAS_NO) %>% summarise(mean_LD=mean(tox),sd_LD=sd(tox),cv=sd_LD/mean_LD)
 cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="Summary stats for overall CAS LD mean, sd, and CV ")%>%kableExtra::kable_classic()
@@ -83,8 +171,65 @@ cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_mi
 
 
 ```{r}
-beetox_OPP %>% group_by(CAS_NO,CHEMICAL) %>% my_skim(tox) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table: Summary stats for LD mean, sd, and CV for each CAS</strong></center>",
+
+beetox_OPP %>% left_join(casinfo_OPP,by=c("CAS_NO"="INPUT"))%>% group_by(CAS_NO,PREFERRED_NAME) %>% my_skim(tox) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table: Summary stats for LD mean, sd, and CV for each CAS</strong></center>",
     escape = FALSE)%>%kableExtra::kable_classic()
 ```
 
 
+
+## Multiplied by AI column
+```{r}
+cv_sum <- beetox_OPP %>% group_by(CAS_NO) %>% summarise(mean_LD=mean(tox_ai),sd_LD=sd(tox_ai),cv=sd_LD/mean_LD)
+cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="Summary stats for overall CAS LD mean, sd, and CV ")%>%kableExtra::kable_classic()
+
+```
+
+
+```{r}
+
+beetox_OPP %>% left_join(casinfo_OPP,by=c("CAS_NO"="INPUT"))%>% group_by(CAS_NO,PREFERRED_NAME) %>% my_skim(tox_ai) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table: Summary stats for LD mean, sd, and CV for each CAS</strong></center>",
+    escape = FALSE)%>%kableExtra::kable_classic()
+```
+
+
+# Ecotox DB Data
+
+## Assuming all ug/bee are ai ug/bee
+
+```{r}
+Data.2$CAS.Number <- webchem::as.cas(Data.2$CAS.Number)
+#Data.3 <- left_join(Data.2,Data.SSD%>%mutate(CAS.Number=as.character(CAS.)))
+Data.3 <- left_join(Data.2,casinfo,by=c("CAS.Number"="INPUT"))
+
+cv_sum <- Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% summarise(mean_LD=mean(Observed.Response.Mean),sd_LD=sd(Observed.Response.Mean),cv=sd_LD/mean_LD)
+cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S1: Summary stats for overall CAS LD mean, sd, and CV </strong></center>",
+    escape = FALSE)%>%kableExtra::kable_classic()
+
+```
+
+
+```{r}
+
+Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% my_skim(Observed.Response.Mean) %>% yank("numeric") %>% select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S2: Summary stats for LD mean, sd, and CV for each CAS</strong></center>",
+    escape = FALSE)%>%kableExtra::kable_classic()
+```
+
+
+
+## Use the purity column and consider values tranformed to AI ug/bee data
+
+```{r}
+Data.3 <- Data.3 %>%filter(!is.na(Data.3$Observed.Response.Mean.t))
+cv_sum <- Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% summarise(mean_LD.t=mean(Observed.Response.Mean.t),sd_LD.t=sd(Observed.Response.Mean.t),cv=sd_LD.t/mean_LD.t)
+cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S1: Summary stats for overall CAS LD mean, sd, and CV </strong></center>",
+    escape = FALSE)%>%kableExtra::kable_classic()
+
+```
+
+
+```{r}
+
+Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% my_skim(Observed.Response.Mean.t) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S2: Summary stats for LD mean, sd, and CV for each CAS</strong></center>",
+    escape = FALSE)%>%kableExtra::kable_classic()
+```

@@ -3,7 +3,13 @@
 #cleaning the environemt
 rm(list=ls())
 casinfo <- read.csv("~/Projects/beemixtox_public/data-raw/CCD-Batch-Search_2022-04-21_01_35_56.csv")
+casinfo$PREFERRED_NAME[casinfo$INPUT=="1910-42-5"]
+id <-which(casinfo$PREFERRED_NAME=="Paraquat" )
+casinfo <- casinfo[-id,]
 usethis::use_data(casinfo,overwrite = T)
+
+casinfo_OPP <- read.csv("~/Projects/beemixtox_public/data-raw/CCD-Batch-Search_2022-04-22_04_26_42.csv")
+usethis::use_data(casinfo_OPP,overwrite = T)
 #Define and set paths
 Dir_Data = "~/Projects/beemixtox_public/data-raw/paper1/"
 Dir_Results = "~/Projects/beemixtox_public/data-raw/paper1/"
