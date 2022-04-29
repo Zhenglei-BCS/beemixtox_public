@@ -1,6 +1,6 @@
 # beemixtox
 
-This is an R package for reproducing the resutlts of the manuscript Bee Mixtox
+This is an R package for reproducing the resutlts of the manuscript for Bee Mixtox.
 
 ## Data
 
@@ -15,11 +15,22 @@ install_github("Zhenglei-BCS/beemixtox_public")
 ```
 
 ### Data Selections and Curation
+
 ```
 vignettes/articles/Ecotox-Database-Handling-and-Analysis.Rmd
 ```
 
-### Tables and Figures in the Manuscript
+```
+vignettes/articles/OPP-Database-Handling-and-Analysis.Rmd
+```
+
+### Figures in the Manuscript
+
+```
+vignettes/articles/Figures-in-Manuscript.Rmd
+```
+
+### Supplemental Materials
 
 ```
 vignettes/articles/Manuscript-Supplemental-Package.Rmd
@@ -28,12 +39,11 @@ vignettes/articles/Manuscript-Supplemental-Package.Rmd
 
 ## Authors
 
-* **Ismael M. Rodea Palomares** - [Ismael M. Rodea Palomares](mailto:ismaelm.rodeapalomares@bayer.com)
-* **Zhenglei Gao** - [Zhenglei Gao](mailto:zhenglei.gao@bayer.com)
 
+* Verena Tänzler; Arnd Weyers; Christian Maus; Markus Ebeling; Steven Levine; Ana Cabrera; Daniel Schmehl; Zhenglei Gao & Ismael Rodea-Palomares
+* Maintainer: **Ismael M. Rodea Palomares** - [Ismael M. Rodea Palomares](mailto:ismaelm.rodeapalomares@bayer.com)
+* Maintainer: **Zhenglei Gao** - [Zhenglei Gao](mailto:zhenglei.gao@bayer.com)
 
 ## Acknowledgments
 
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+* All Reviewers
