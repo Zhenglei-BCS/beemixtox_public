@@ -7,6 +7,9 @@ output:
     code_folding: hide
 ---
 
+
+
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -96,7 +99,7 @@ car::Anova(mod) %>% knitr::kable(.,digits = 3,caption="<center><strong>Table S-2
 
 Both databases include pesticides evaluated both as active ingredients (technical grade materials) or formulated products. In both databases a field for purity or active ingredient content is provided, but reporting is heterogeneous (it is not reported for many chemicals). Further, there is no clear indication in either database on whether the LD50s provided in the database that are given for formulated products has been already expressed in terms of total active ingredient (with few exceptions identified in the database as e.g. ug ai/bee). Therefore, to account for the potential uncertainty emerging of this lack of complete information, summary statistics for the LD50s were computed both as reported in the database, and corrected by the available information concerning purity or content of active ingredient when available.
 
-Table S-1 to S-8 shows the CV statistics with raw LD50 data and with AI content corrected LD50 data. 
+Table S-3 to S-10 shows the CV statistics with raw LD50 data and with AI content corrected LD50 data. 
 
 ```{r}
 library(skimr)
@@ -125,7 +128,7 @@ Data.2$CAS.Number <- webchem::as.cas(Data.2$CAS.Number)
 Data.3 <- left_join(Data.2,casinfo,by=c("CAS.Number"="INPUT"))
 
 cv_sum <- Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% summarise(mean_LD=mean(Observed.Response.Mean),sd_LD=sd(Observed.Response.Mean),cv=sd_LD/mean_LD)
-cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-1: Summary stats for overall CAS mean, sd, and CV for the USEPA ECOTOX bee raw LD50 data. </strong></center>",
+cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-3: Summary stats for overall CAS mean, sd, and CV for the USEPA ECOTOX bee raw LD50 data. </strong></center>",
     escape = FALSE)%>%kableExtra::kable_classic()
 
 ```
@@ -133,7 +136,7 @@ cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_mi
 
 ```{r}
 
-Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% my_skim(Observed.Response.Mean) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-2: Summary stats for LD mean, sd, and CV for each CAS with USEPA ECOTOX bee raw LD50 data</strong></center>",
+Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% my_skim(Observed.Response.Mean) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-4: Summary stats for LD mean, sd, and CV for each CAS with USEPA ECOTOX bee raw LD50 data</strong></center>",
     escape = FALSE)%>%kableExtra::kable_classic()
 ```
 
@@ -142,7 +145,7 @@ Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% my_skim(Observed.Response.Mea
 ```{r}
 Data.3 <- Data.3 %>%filter(!is.na(Data.3$Observed.Response.Mean.t))
 cv_sum <- Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% summarise(mean_LD.t=mean(Observed.Response.Mean.t),sd_LD.t=sd(Observed.Response.Mean.t),cv=sd_LD.t/mean_LD.t)
-cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-3: Summary stats for overall CAS LD mean, sd, and CV with USEPA ECOTOX bee corrected LD50 data </strong></center>",
+cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-5: Summary stats for overall CAS LD mean, sd, and CV with USEPA ECOTOX bee corrected LD50 data </strong></center>",
     escape = FALSE)%>%kableExtra::kable_classic()
 
 ```
@@ -150,7 +153,7 @@ cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_mi
 
 ```{r}
 
-Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% my_skim(Observed.Response.Mean.t) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-4: Summary stats for LD mean, sd, and CV for each CAS with USEPA ECOTOX bee corrected LD50 data </strong></center>",
+Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% my_skim(Observed.Response.Mean.t) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-6: Summary stats for LD mean, sd, and CV for each CAS with USEPA ECOTOX bee corrected LD50 data </strong></center>",
     escape = FALSE)%>%kableExtra::kable_classic()
 ```
 
@@ -165,14 +168,14 @@ Summary statistics for the OPP dataset for he overall dataset and CAS by CAS num
 
 ```{r}
 cv_sum <- beetox_OPP %>% group_by(CAS_NO) %>% summarise(mean_LD=mean(tox),sd_LD=sd(tox),cv=sd_LD/mean_LD)
-cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-5: Summary stats for overall CAS LD mean, sd, and CV  in the OPP bee raw LD50 data </strong></center> ")%>%kableExtra::kable_classic()
+cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-7: Summary stats for overall CAS LD mean, sd, and CV  in the OPP bee raw LD50 data </strong></center> ")%>%kableExtra::kable_classic()
 
 ```
 
 
 ```{r}
 
-beetox_OPP %>% left_join(casinfo_OPP,by=c("CAS_NO"="INPUT"))%>% group_by(CAS_NO,PREFERRED_NAME) %>% my_skim(tox) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-6: Summary stats for LD mean, sd, and CV for each CAS in the OPP bee raw LD50 data</strong></center>",
+beetox_OPP %>% left_join(casinfo_OPP,by=c("CAS_NO"="INPUT"))%>% group_by(CAS_NO,PREFERRED_NAME) %>% my_skim(tox) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-8: Summary stats for LD mean, sd, and CV for each CAS in the OPP bee raw LD50 data</strong></center>",
     escape = FALSE)%>%kableExtra::kable_classic()
 ```
 
@@ -182,14 +185,14 @@ beetox_OPP %>% left_join(casinfo_OPP,by=c("CAS_NO"="INPUT"))%>% group_by(CAS_NO,
 
 ```{r}
 cv_sum <- beetox_OPP %>% group_by(CAS_NO) %>% summarise(mean_LD=mean(tox_ai),sd_LD=sd(tox_ai),cv=sd_LD/mean_LD)
-cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-7: Summary stats for overall CAS LD mean, sd, and CV  in the OPP bee LD50 data corrected by AI content</strong></center> ")%>%kableExtra::kable_classic()
+cv_sum %>% ungroup() %>% my_skim()%>% yank("numeric") %>% dplyr::select(-c( n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-9: Summary stats for overall CAS LD mean, sd, and CV  in the OPP bee LD50 data corrected by AI content</strong></center> ")%>%kableExtra::kable_classic()
 
 ```
 
 
 ```{r}
 
-beetox_OPP %>% left_join(casinfo_OPP,by=c("CAS_NO"="INPUT"))%>% group_by(CAS_NO,PREFERRED_NAME) %>% my_skim(tox_ai) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-8: Summary stats for LD mean, sd, and CV for each CAS in the OPP bee LD50 data corrected by AI content</strong></center>",
+beetox_OPP %>% left_join(casinfo_OPP,by=c("CAS_NO"="INPUT"))%>% group_by(CAS_NO,PREFERRED_NAME) %>% my_skim(tox_ai) %>% yank("numeric") %>% dplyr::select(-c(skim_variable, n_missing,complete_rate)) %>% knitr::kable(.,digits=2,caption="<center><strong>Table S-10: Summary stats for LD mean, sd, and CV for each CAS in the OPP bee LD50 data corrected by AI content</strong></center>",
     escape = FALSE)%>%kableExtra::kable_classic()
 ```
 
@@ -328,7 +331,7 @@ knitr::kable(
 
 
 ```{r}
-d95 %>% knitr::kable(.,caption="<strong>Table S-9: 95th %tile of the Simulated MDRs based on additive mixture assumption (Same compound is being mixed with itself in the mixture)</strong>",
+d95 %>% knitr::kable(.,caption="<strong>Table S-11: 95th %tile of the Simulated MDRs based on additive mixture assumption (Same compound is being mixed with itself in the mixture)</strong>",
     escape = FALSE,digits = 2)%>%kableExtra::kable_classic()
 ```
 
@@ -386,7 +389,7 @@ conf2 <- conf %>% rename(`Synery Factor 2`=synergy)
 
 
 ```{r eval=F,include=F}
-conf %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"%"))%>%mutate(Mixture=plyr::mapvalues(Mixture,from=c(2,3),to=c("Binary","Ternary"))) %>% knitr::kable(., "html",caption="<center><strong>Table S-10: The Confusion Matrix using different MDR thresholds when reduction factor is 2</strong></center>", escape = FALSE) %>%kable_paper(c("striped"),full_width = T) %>% collapse_rows
+conf %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"%"))%>%mutate(Mixture=plyr::mapvalues(Mixture,from=c(2,3),to=c("Binary","Ternary"))) %>% knitr::kable(., "html",caption="<center><strong>Table S-12: The Confusion Matrix using different MDR thresholds when reduction factor is 2</strong></center>", escape = FALSE) %>%kable_paper(c("striped"),full_width = T) %>% collapse_rows
 ```
 
 
@@ -473,7 +476,7 @@ if(interactive()) ggsave(file="inst/manuscript/Figure3.png",width=12,height=7,dp
 ```{r}
 confall <- left_join(conf2,conf5)
 confall <- left_join(confall,conf10)
-confall %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"%"))%>%mutate(Mixture=plyr::mapvalues(Mixture,from=c(2,3),to=c("Binary","Ternary"))) %>% knitr::kable(., "html",caption="<center><strong>Table S-11: The Confusion Matrix using different MDR thresholds when reduction factor is 2, 5, and 10 </strong></center>", escape = FALSE) %>%kable_paper(c("striped"),full_width = T) %>% collapse_rows(columns = c(1,2,3))
+confall %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"%"))%>%mutate(Mixture=plyr::mapvalues(Mixture,from=c(2,3),to=c("Binary","Ternary"))) %>% knitr::kable(., "html",caption="<center><strong>Table S-13: The Confusion Matrix using different MDR thresholds when reduction factor is 2, 5, and 10 </strong></center>", escape = FALSE) %>%kable_paper(c("striped"),full_width = T) %>% collapse_rows(columns = c(1,2,3))
 ```
 
 

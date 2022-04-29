@@ -47,7 +47,7 @@ p2 <- ggplot(data=BCSdata, aes(log10Q, colour = Exposure.Type)) +
         axis.text.y = element_text(size = 9), axis.text.x = element_text(size = 14), axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), legend.text=element_text(size=14), legend.title=element_text(size=14),
         # legend.key.size=unit(1, "cm"), legend.position="right", legend.box.background = element_rect(size=1,fill=NA))+
         legend.position="top")+
-      labs(x="log10(MDR)",y="Prob")
+  labs(x="log10(MDR)",y="Prob")
 ```
 
 
@@ -71,18 +71,23 @@ p3 <- ggplot(BCSdata, aes(x=as.factor(CLASSIFICATION),y=log10Q))+
 
 
 ```{r fig.width=12,fig.height=5,fig.cap="Figure 1. Influence of Exposure time, Exposure route and quality of matching on acute bee MDRs"}
-p1 + p2 +p3+
-  # plot_layouttg(guides = 'collect') +
-  plot_annotation(tag_levels = 'A')
-if(interactive()) ggsave("inst/manuscript/Paper_Figure1_ecdfs.pdf", width=12, height = 5, units = "in")
-if(interactive()) ggsave("inst/manuscript/Paper_Figure1_ecdfs.png", width=12, height = 5, units = "in")
+fig1 <- p1 + p2 +p3+  plot_annotation(tag_levels = 'A')
+fig1
+if(interactive()){
+  cairo_ps("inst/manuscript/Paper_Figure1.eps",width = 12,height=5)
+  fig1
+  dev.off()
+  fig1
+  ggsave("inst/manuscript/Paper_Figure1.pdf", width=12, height = 5, units = "in")
+  ggsave("inst/manuscript/Paper_Figure1.png", width=12, height = 5, units = "in",dpi=300)
+}
 ```
 
 
 ### Figure 2 for the BCS dataset Analysis
 
 ```{r fig.height=8,fig.cap="Figure 2: Acute bee MDR values by chemical combination"}
-ggplot(BCSdata,aes(x=combo.name,y=log10Q))+
+fig2 <- ggplot(BCSdata,aes(x=combo.name,y=log10Q))+
   geom_boxplot(fill="grey75", outlier.shape = NA)+
   geom_jitter(width = 0.2, alpha=0.7, aes(colour = Exposure.Type)) +
   # geom_boxplot(aes(fill=combo.class.name))+
@@ -97,10 +102,15 @@ ggplot(BCSdata,aes(x=combo.name,y=log10Q))+
         legend.position="top")+
   labs(x=NULL,y="log10(MDR)")+
   coord_flip(ylim = c(min(BCSdata$log10Q, na.rm = T), max(BCSdata$log10Q, na.rm = T)))
-
-
-if(interactive()) ggsave("inst/manuscript/Paper_Figure2.pdf", width=12, height = 12, units = "in")
-if(interactive()) ggsave("inst/manuscript/Paper_Figure2.png", width=12, height = 12, units = "in")
+fig2
+if(interactive()){
+  cairo_ps("inst/manuscript/Paper_Figure2.eps",width = 7,height=7)
+  fig2
+  dev.off()
+  fig2
+  ggsave("inst/manuscript/Paper_Figure2.pdf", width=7, height = 7, units = "in")
+  ggsave("inst/manuscript/Paper_Figure2.png", width=7, height = 7, units = "in",dpi=300)
+}
 ```
 
 ## Generate Figure 3 for simulation study. 
@@ -108,9 +118,9 @@ if(interactive()) ggsave("inst/manuscript/Paper_Figure2.png", width=12, height =
 
 ```{r fig.cap="Figure S5: False Positive Rate when there is no synergy"}
 Res_Null <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
-                         mdrs=c(2,3,5,10),
-                         Nsim=12000,
-                         synergy=F,q=0.95)
+                          mdrs=c(2,3,5,10),
+                          Nsim=12000,
+                          synergy=F,q=0.95)
 sim_H0 <- ggplot(Res_Null$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.05,lty=2)+xlab("MDR Cutoff")+ylab("False Positive Rate")+ggtitle("No Synery")
 ```
 
@@ -206,7 +216,13 @@ conf10 <- conf %>% rename(`Synery Factor 10`=synergy)
 ```{r fig.cap="Figure 3: True and false positive rates under different synergy assumption",fig.align="center",fig.width=12,fig.height=7}
 library(patchwork)
 
-sim_H0+sim_H2+sim_H5+sim_H10+plot_annotation(tag_levels = 'A')+ plot_layout(guides = "collect")
-if(interactive()) ggsave(file="inst/manuscript/Figure3.png",width=12,height=7,dpi=300)
-
+fig3 <- sim_H0+sim_H2+sim_H5+sim_H10+plot_annotation(tag_levels = 'A')+ plot_layout(guides = "collect")
+fig3
+if(interactive()) {
+  ggsave(file="inst/manuscript/Figure3.png",width=12,height=7,dpi=300)
+  ggsave(file="inst/manuscript/Figure3.pdf",width=12,height=7)
+  cairo_ps("inst/manuscript/Figure3.eps",width = 12,height=7)
+  fig3
+  dev.off()
+}
 ```
