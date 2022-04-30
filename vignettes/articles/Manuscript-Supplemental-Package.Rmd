@@ -5,6 +5,7 @@ output:
   html_document: 
     df_print: paged
     code_folding: hide
+    number_sections: true
 ---
 
 
@@ -38,10 +39,6 @@ library(patchwork)
 
 
 
-
-
-# Simulation based MDR analysis
-
 Numerically speaking, potential synergy could be concluded if an experimental MDR is greater than 1. However, the observed difference in toxicity of the mixture with respect to the prediction under additivity could be due either a true toxicological interaction or simply variability (cv) during toxicity testing. To explore the relationship between simple experimental variability and MDR, we use simulation based methods where we can assume a specific level of variability of each mixture component and the mixture. Then we check the possibilities to distinguish between true synergistic effect and variability of the mixture components. 
 For generating MDR values for perfectly additive mixtures, we followed the approach proposed by Belden and Brain (2018). Distributions of MDR values were generated that would occur for the combinations of perfectly additive chemicals (i.e., the same chemical mixed with itself) in which the variability in the resulting MDRs comes only from experimental variability. For this we assumed a log-normal distribution of LD50 values with a mean of 1 µg/bee, and a defined coefficient of variation (CV%) (30%, 60%, 100%, 140%, and 300%) and we randomly generated LD50s for two (for binary mixtures) or three (for Ternary mixtures) active substances and their combinations for 12000 simulations. For each of the 12000 simulations, an MDR was calculated, and the distribution of the MDRs was determined. The 95% of the MDR distributions is the MDR value that ensures a false positive rate equal to 5% (alpha 0.05). 
 
@@ -49,18 +46,18 @@ In Belden and Brain’s approach the simulation assumption is that the mixture c
 
 
 
-## Experimental variability driven MDR thresholds for synergy detection
+# Experimental variability driven MDR thresholds for synergy detection
 
 
 To guide the selection of relevant CV% to simulate, experimental ecotoxicity data was collected from two different public sources: The first one was obtained from the USEPA ECOTOX Knowledgebase database (https://cfpub.epa.gov/ecotox/), and the second source was the OPP Pesticide Ecotoxicity Database (https://ecotox.ipmcenters.org/). The main difference between the databases is that USEPA ECOTOX Knowledgebase includes data from any public source with meet the data quality criteria for inclussion in the database, however, studies do not necessarily follow a specific guidelile, and chemicals are not restricted to any specific chemical group such as pesticides. By contrary, the OPP Pesticide Ecotoxicity Database includes only regulatory data that follow regulatory guidelines and that has been submitted by registrants of pesticidal products in the US. Both were interrogated against a series of query parameters to restrict the search to acute honey bee data for routes of exposure consistent with oral and contact exposure. Detailed explanation of the origin, curation and characteristics of the experimental data based on ECOTOX Knowledgesbase database can be found in `vignettes/articles/Ecotox-Database-Handling-and-Analysis.html`. The file to reproduce the pre-processing of the experimental data are included in the file `vignettes/articles/Ecotox-Database-Handling-and-Analysis.Rmd`. For the filtering and curation of the experimental data extracted from OPP Pesticide Ecotoxcity Database can be reproduced using `vignettes/articles/OPP-Database-Handling-and-Analysis.Rmd`
 
-### Assessment of LD50 Data Homogeneity 
+## Assessment of LD50 Data Homogeneity 
 
-#### USEPA ECOTOX Knowledge base
+### USEPA ECOTOX Knowledge base
 
-Experimental bee data was obtained from the USEPA ECOTOX Knowledge base as described in the Material & Methods section of the main manuscript. Search criteria for the ECOTOX database were: **Habitat**: “terrestrial”, **Effect Measurements**: “Mortality Group: Mortality”, **Endpoints**: Concentration Based Endpoints: LD50”, **Species **: Name(s) / Number(s): “honey bee”, Kingdom: “Animals”, Name Search Type: “Common Name”, ** Test Conditions **: Test Locations: Lab.
+Experimental bee data was obtained from the USEPA ECOTOX Knowledge base as described in the Material & Methods section of the main manuscript. Query criteria for the ECOTOX database were: **Habitat**: terrestrial; **Effect Measurements**: Mortality Group: Mortality; **Endpoints**: Concentration Based Endpoints: LD50; **Species**: Name(s) / Number(s): honey bee, Kingdom: Animals, Name Search Type: Common Name, **Test Conditions**: Test Locations: Lab.
 
-A total of 21909 toxicity values for 578 different CAS numbers for honey bees were available at the database. This data however included a variety of bee life forms, exposure routes, exposure times, and other factors. Therefore, we restricted the dataset to ensure the relevant information was retained for the analysis. The main elements for data curation were: (1) restrict the data to adult life stage, (2) Subset to relevant exposure times (between 24h and 48 h). (3) restrict to defined (bound) end-points. (4) Restrict to exposure types consistent with an oral or contact exposure route. (4) Restrict to CAS numbers for which at least 4 toxicity end-points were available. All units were converted to ug/bee. Curation is documented in the "bee mixtox" data package freely available. After the data curation, 312 observations for 26 chemicals were available for further data analysis. Despite the data curation, the data available per CAS number was still relatively heterogeneous. In order to understand the sources of potential variability in the dataset and its degree of statistical heterogeneity we performed an ANOVA analysis. We found that the only statistically significant factor contributing to differences in LD50 was the chemical identity, being exposure route, exposure time, and concentration type not statistically significant factors explaining the differences observed in LD50. Therefore, all available LD50s per CAS numbers available were pulled together for further analysis.
+A total of 21909 toxicity values for 578 different CAS numbers for honey bees were available at the database. This data however included a variety of bee life forms, exposure routes, exposure times, and other factors. Therefore, we restricted the dataset to ensure the relevant information was retained for the analysis. The main elements for data curation were: (1) restrict the data to adult life stage, (2) Subset to relevant exposure times (between 24h and 48 h). (3) restrict to defined (bound) end-points. (4) Restrict to exposure types consistent with an oral or contact exposure route. (4) Restrict to CAS numbers for which at least 4 toxicity end-points were available. All units were converted to ug/bee. Curation is documented in the "bee mixtox" data package freely available. After the data curation, 143 observations for 21 chemicals were available for further data analysis. Despite the data curation, the data available per CAS number was still relatively heterogeneous. In order to understand the sources of potential variability in the dataset and its degree of statistical heterogeneity we performed an ANOVA analysis. We found that the only statistically significant factor contributing to differences in LD50 was the chemical identity, being exposure route, exposure time, and concentration type not statistically significant factors explaining the differences observed in LD50. Therefore, all available LD50s per CAS numbers available were pulled together for further analysis.
 
 ```{r fig.width=8}
 Data.2 <- Data.2 %>% mutate(logTox = log(Observed.Response.Mean))
@@ -77,11 +74,11 @@ car::Anova(mod) %>% knitr::kable(.,digits = 3,caption="<center><strong>Table S-1
 As shown in the ANOVA Table in Table S-1, none of the covariate variables, except for CAS.Number,  has a significant effect on the observed response mean. 
 
 
-#### OPP Pesticide Ecotoxicity Database
+### OPP Pesticide Ecotoxicity Database
 
 Bee toxicity data were extracted from the OPP Pesticide Ecotoxicity Database. The database was first filtered by test species being "Honey bee". A total of 2009 toxicity values for 515 different CAS numbers for honey bees were available at the database. Similar to the experimental data obtained from USEPA ECOTOX database, filtering and curation steps were performed to form a reliable dataset for further study of the LD50 distributions and for comparison with those derived from the USEPA ECOTOX database.  The main steps for data curation were: (1) restrict the data to adult life stage, (2) Subset to relevant exposure times (between 24h and 48 h). (3) restrict to defined (bound) end-points. (4) Restrict to exposure types consistent with an oral or contact exposure route. (4) Restrict to CAS numbers for which at least 4 toxicity end-points were available, (5) Exclude all mixture entries. All units were converted to ug/bee. Curation is documented in the "bee mixtox" data package freely available. 
 
-After the data curation, 120 observations for 21 chemicals were available for further data analysis. Similar ANOVA was performed for OPP Pesticide BEE LD50 data to investigate the data homogeneity. The result table as shown in Table S-2 indicates that there is no significant different LD50s for different study durations or exposure types. The vairance in the LD50 data is mainly contributed from the different CAS in the dataset.  
+After the data curation, 120 observations for 23 chemicals were available for further data analysis. Similar ANOVA was performed for OPP Pesticide BEE LD50 data to investigate the data homogeneity. The result table as shown in Table S-2 indicates that there is no significant different LD50s for different study durations or exposure types. The vairance in the LD50 data is mainly contributed from the different CAS in the dataset.  
 
 
 ```{r}
@@ -95,7 +92,7 @@ summary(mod)
 car::Anova(mod) %>% knitr::kable(.,digits = 3,caption="<center><strong>Table S-2: ANOVA Results in the OPP Pesticide Ecotoxicity Bee LD50 Data</strong></center>") %>% kableExtra::kable_classic()
 ```
 
-### CV of the experimental data - Sensitivity Analysis
+## CV of the experimental data - Sensitivity Analysis
 
 Both databases include pesticides evaluated both as active ingredients (technical grade materials) or formulated products. In both databases a field for purity or active ingredient content is provided, but reporting is heterogeneous (it is not reported for many chemicals). Further, there is no clear indication in either database on whether the LD50s provided in the database that are given for formulated products has been already expressed in terms of total active ingredient (with few exceptions identified in the database as e.g. ug ai/bee). Therefore, to account for the potential uncertainty emerging of this lack of complete information, summary statistics for the LD50s were computed both as reported in the database, and corrected by the available information concerning purity or content of active ingredient when available.
 
@@ -111,7 +108,7 @@ my_skim <- skim_with(numeric = sfl(cv,nobs=length))
 ```
 
 
-#### USEPA ECOTOX Knowledge base
+### USEPA ECOTOX Knowledge base
 
 Summary statistics for the USEPA ECOTOX dataset for the overall dataset and CAS by CAS number can be found below.
 
@@ -159,7 +156,7 @@ Data.3 %>% group_by(CAS.Number,PREFERRED_NAME) %>% my_skim(Observed.Response.Mea
 
 
 
-#### OPP Pesticide Ecotoxicity Database
+### OPP Pesticide Ecotoxicity Database
 
 Summary statistics for the OPP dataset for he overall dataset and CAS by CAS number can be found below.
 
@@ -197,10 +194,10 @@ beetox_OPP %>% left_join(casinfo_OPP,by=c("CAS_NO"="INPUT"))%>% group_by(CAS_NO,
 ```
 
 
+# Simulation Based MDR Analysis
 
 
-
-### MDR (Mixture Deviation Ratio) thresholds 
+## MDR (Mixture Deviation Ratio) thresholds 
 
 $$MDR = \frac{LD_{50,predicted}}{LD_{50,measured}}$$
 
@@ -335,15 +332,14 @@ d95 %>% knitr::kable(.,caption="<strong>Table S-11: 95th %tile of the Simulated 
     escape = FALSE,digits = 2)%>%kableExtra::kable_classic()
 ```
 
-### Extending Belden and Brian (2018) to using alternative assumption as simulation truth
+## Extending Belden and Brian (2018) to using alternative assumption as simulation truth
 
 In the 2nd simulation study, for each reduction factor N ($N=2,5,10$). for the 12,000 simulation runs 
 1. LD50s for the single component in the mixture were sampled from a log-normal distribution with mean of 1 µg/bee, and a defined CV%, whereas the LD50s for the mixture were generated from a log-normal distribution with mean of 1/$N$ µg/bee and the same CV%. Note that the simulation truth is that there is synergism effect and the test using the given MDR (or the decision made given using different MDR thresholds) should have enough power to identify the difference in toxicity between the mixture and the single components instead of keeping the false positive rates low enough when the simulation truth is that "there is no synergism effect".
 
 Similar to the previous simulation, an MDR was calculated for each simulation run. The distribution of the resulting MDR values was then determined. We repeated this process for CVs of 30%, 60%, 100%, 140% and 300%.  We also conducted the analysis for binary and Ternary mixtures.The proportion of samples that would be classified correctly as synergistic if using the following reference levels of threshold MDR:  2, 3, 5, 10 are calulated.
 
-For each CV and MDR threshold combination, the confusion matrix were calculated and summarized in Table S4-S6. The aim is to find a balancing point where the false positive rates is low enough (below 5% or 10%) and the power to detect the true synergism effect is high enough (above 75% or 80%). When the CV is high and the synergism effect is low, it is naturally hard to distinguish between the toxicity variability within one single component of the mixture and the synergism effect caused by a true synergy. Low MDR thresholds would provide enough power for detecting a true effect but would have a high false positive rates when there is actually no such effect. When the CV is low or medium, for example, when CV is between 30% and 100%,  it is possible to use MDR of 5 to detect a reasonable size of synergistic effect (reduction factor greater than 5) with true positive rates around 70% and false positive rates below 5%. On the other hand, it is not possible to find a balancing point for synergism effect with a reduction factor of 2, even with the lowest CV used in the simulation, the true positive rate is always below 60%. This means that the test itself lacks the required accuracy to detect a 2x difference between the predicted and experimental toxicity.
-
+For each CV and MDR threshold combination, the confusion matrix were calculated and summarized in Table S-13. A confusion matrix as shown in Figure S4 represents the false positive and negative rates for detecting synergism when it exists or does not exist with applied decision rule using different MDR thresholds. The aim is to find a balancing point where the false positive rates is low enough (below 5% or 10%) and the power to detect the true synergism effect is high enough (above 75% or 80%). When the CV is high and the synergism effect is low, it is naturally hard to distinguish between the toxicity variability within one single component of the mixture and the synergism effect caused by a true synergy. Low MDR thresholds would provide enough power for detecting a true effect but would have a high false positive rates when there is actually no such effect. When the CV is low or medium, for example, when CV is between 30% and 100%,  it is possible to use MDR of 5 to detect a reasonable size of synergistic effect (reduction factor greater than 5) with true positive rates around 70% and false positive rates below 5%. On the other hand, it is not possible to find a balancing point for synergism effect with a reduction factor of 2, even with the lowest CV used in the simulation, the true positive rate is always below 60%. This means that the test itself lacks the required accuracy to detect a 2x difference between the predicted and experimental toxicity.
 
 
 
@@ -351,7 +347,7 @@ For each CV and MDR threshold combination, the confusion matrix were calculated 
 knitr::include_graphics("assets/confusion1.png")
 ```
 
-**Confusion matrix and quantiles for MDR**
+
 
 ```{r fig.cap="Figure S5: False Positive Rate when there is no synergy"}
 Res_Null <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),

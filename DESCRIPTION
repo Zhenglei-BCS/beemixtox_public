@@ -2,14 +2,14 @@ Package: beemixtox1
 Title: Reproduce the manuscript work
 Version: 1.0.0.01
 Authors@R: 
-    person(given = "Zhenglei",
+    c(person(given = "Zhenglei",
            family = "Gao",
            role = c("aut", "cre"),
            email = "zhenglei.gao@bayer.com"),
     person(given="Ismael",
            family="Rodea-Palomares",
            role="",
-           email="ismaelm.rodeapalomares@bayer.com")
+           email="ismaelm.rodeapalomares@bayer.com"))
 Description: Reproduce the manuscript work.
 License: `use_mit_license()`
 Encoding: UTF-8
