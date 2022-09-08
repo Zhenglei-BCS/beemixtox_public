@@ -121,11 +121,12 @@ Res_Null <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
                           mdrs=c(2,3,5,10),
                           Nsim=12000,
                           synergy=F,q=0.95)
-sim_H0 <- ggplot(Res_Null$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.05,lty=2)+xlab("MDR Cutoff")+ylab("False Positive Rate")+ggtitle("No Synery")
+sim_H0 <- ggplot(Res_Null$confusion,aes(x=name,y=value,col=CV))+geom_point()+geom_line(aes(group=CV))+facet_grid(.~Mixture)+theme(axis.text.x = element_text(angle = 90))+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+geom_hline(yintercept = 0.05,lty=2)+xlab("MDR Cutoff")+ylab("False Positive Rate")+ggtitle("No Synergy")
 ```
 
+#### Simulation factor of 2
 
-```{r fig.cap="Figure S6: Power to detect synery when there is a reduction factor of 2"}
+```{r fig.cap="Figure S6: Power to detect Synergy when there is a reduction factor of 2"}
 Res_Alt <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
                          mdrs=c(2,3,5,10),
                          Nsim=12000,
@@ -146,7 +147,7 @@ conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr
   df[2:1,c(3,1,2)]%>%mutate(`No synergy`=paste0(c("True Negative=","False Positive="),formatC(`No synergy`*100,digits = 1,format="f"),"%"),synergy=paste0(c("False Negative=","True Positive="),formatC(synergy*100,digits = 1,format="f"),"%"))
 }))%>%unnest(cols = c(data))
 library(kableExtra)
-conf2 <- conf %>% rename(`Synery Factor 2`=synergy)
+conf2 <- conf %>% rename(`Synergy Factor 2`=synergy)
 ## conf %>% knitr::kable(., "markdown")
 ```
 
@@ -156,9 +157,12 @@ conf %>% relocate(Mixture, .before = CV)%>%mutate(CV=paste0(as.numeric(CV)*100,"
 ```
 
 
+
+
+
 #### Simulation factor of 3
 
-```{r fig.cap="Figure S6: Power to detect synery when there is a reduction factor of 2"}
+```{r fig.cap="Figure S6: Power to detect Synergy when there is a reduction factor of 3"}
 Res_Alt <- simConfusion (cvs=c(0.3,0.6,1,1.4,3),
                          mdrs=c(2,3,5,10),
                          Nsim=12000,
@@ -179,7 +183,7 @@ conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr
   df[2:1,c(3,1,2)]%>%mutate(`No synergy`=paste0(c("True Negative=","False Positive="),formatC(`No synergy`*100,digits = 1,format="f"),"%"),synergy=paste0(c("False Negative=","True Positive="),formatC(synergy*100,digits = 1,format="f"),"%"))
 }))%>%unnest(cols = c(data))
 library(kableExtra)
-conf3 <- conf %>% rename(`Synery Factor 3`=synergy)
+conf3 <- conf %>% rename(`Synergy Factor 3`=synergy)
 ## conf %>% knitr::kable(., "markdown")
 ```
 
@@ -208,7 +212,7 @@ conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr
   df[2:1,c(3,1,2)]%>%mutate(`No synergy`=paste0(c("True Negative=","False Positive="),formatC(`No synergy`*100,digits = 1,format="f"),"%"),synergy=paste0(c("False Negative=","True Positive="),formatC(synergy*100,digits = 1,format="f"),"%"))
 }))%>%unnest(cols = c(data))
 library(kableExtra)
-conf5 <- conf %>% rename(`Synery Factor 5`=synergy)
+conf5 <- conf %>% rename(`Synergy Factor 5`=synergy)
 ## conf %>% knitr::kable(., "markdown")
 ```
 
@@ -240,7 +244,7 @@ conf <- confusion %>% group_by(Mixture,CV,name) %>% nest() %>% mutate(data=purrr
 library(kableExtra)
 
 ##conf %>% knitr::kable(., "markdown")
-conf10 <- conf %>% rename(`Synery Factor 10`=synergy)
+conf10 <- conf %>% rename(`Synergy Factor 10`=synergy)
 ```
 
 
@@ -248,17 +252,27 @@ conf10 <- conf %>% rename(`Synery Factor 10`=synergy)
 ```{r fig.cap="Figure 3: True and false positive rates under different synergy assumption",fig.align="center",fig.width=12,fig.height=7}
 library(patchwork)
 
+
+sim_H0 <- sim_H0+scale_color_manual(labels = c("30%","60%","100%","140%","300%"),values = scales::hue_pal()(5))
+sim_H2 <- sim_H2+scale_color_manual(labels = c("30%","60%","100%","140%","300%"),values = scales::hue_pal()(5)) 
+
+sim_H3 <- sim_H3+scale_color_manual(labels = c("30%","60%","100%","140%","300%"),values = scales::hue_pal()(5)) 
+sim_H5 <- sim_H5+scale_color_manual(labels = c("30%","60%","100%","140%","300%"),values = scales::hue_pal()(5)) 
+sim_H10 <- sim_H10+scale_color_manual(labels = c("30%","60%","100%","140%","300%"),values = scales::hue_pal()(5)) 
 fig3 <- sim_H0+sim_H2+sim_H5+sim_H10+plot_annotation(tag_levels = 'A')+ plot_layout(guides = "collect")
-fig3
-sim_H0 <- sim_H0+scale_color_manual(labels = c("30%","60%","100%","140%","300%"),values = scales::hue_pal()(5)) sim_H3 <- sim_H3+scale_color_manual(labels = c("30%","60%","100%","140%","300%"),values = scales::hue_pal()(5)) sim_H5 <- sim_H5+scale_color_manual(labels = c("30%","60%","100%","140%","300%"),values = scales::hue_pal()(5)) sim_H10 <- sim_H10+scale_color_manual(labels = c("30%","60%","100%","140%","300%"),values = scales::hue_pal()(5)) 
-fig3 <- sim_H0+sim_H3+sim_H5+sim_H10+plot_annotation(tag_levels = 'A')+ plot_layout(guides = "collect")
 fig3
 
 if(interactive()) {
   ggsave(file="inst/manuscript/Figure3.png",width=12,height=7,dpi=300)
   ggsave(file="inst/manuscript/Figure3.pdf",width=12,height=7)
-  cairo_ps("inst/manuscript/Figure3.eps",width = 12,height=7)
-  fig3
-  dev.off()
+  # cairo_ps("inst/manuscript/Figure3.eps",width = 12,height=7)
+  # fig3
+  # dev.off()
+  sim_H3
+  ggsave(file="inst/manuscript/Figure3_synergy_3.png",width=12,height=7,dpi=300)
+  ggsave(file="inst/manuscript/Figure3_synergy_3.pdf",width=12,height=7)
 }
+
+
+
 ```
