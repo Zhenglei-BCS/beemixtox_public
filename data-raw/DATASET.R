@@ -676,6 +676,6 @@ usethis::use_data(BCSdata,overwrite = TRUE)
 
 
 setwd("~/Projects/beemixtox_public/")
-toxdata <- read.csv("data-raw/OPP/Toxdata.csv")
+toxdata <- read.csv("~/Projects/beemixtox_public/data-raw/OPP/Toxdata.csv")
 
 usethis::use_data(toxdata, overwrite = TRUE)
