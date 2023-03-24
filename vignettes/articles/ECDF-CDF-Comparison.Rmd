@@ -146,7 +146,7 @@ ggsave(file="vignettes/articles/archive/ecdf-cdf-synergy.png",width=12,height=7,
 
 ```{r}
 p2+geom_line(data=ymat%>%filter(CV=="100%"),aes(x=log10(MDR),lty=CV),stat = "ecdf",lwd=1.5,col="purple")+scale_size_manual("CV",guide=guide_legend(override.aes = list(colour=c("orange","darkred","darkgreen"))))
-ggsave(file="vignettes/articles/archive/ecdf-cdf-2.png",width=12,height=7,dpi=300)
+ggsave(file="vignettes/articles/archive/ecdf-cdf-2-CV1.png",width=12,height=7,dpi=300)
 
 p2+geom_line(data=ymat,aes(x=log10(MDR),lty=CV),stat = "ecdf",lwd=1.5,col="purple")+scale_size_manual("CV",guide=guide_legend(override.aes = list(colour=c("orange","darkred","darkgreen"))))
 ggsave(file="vignettes/articles/archive/ecdf-cdf-2.png",width=12,height=7,dpi=300)
